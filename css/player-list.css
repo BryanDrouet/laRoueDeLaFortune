@@ -1,0 +1,98 @@
+.player-controls {
+    display: flex;
+    gap: 5px;
+    margin-left: auto;
+}
+
+.player-controls button {
+    padding: 2px 8px;
+    font-size: 0.9em;
+}
+
+.players-list li {
+    display: flex;
+    align-items: center;
+    padding: 12px 14px;
+    background: var(--gradient-light-overlay);
+    border-radius: 10px;
+    margin-bottom: 10px;
+    box-shadow: var(--shadow-md);
+    border-left: 4px solid var(--color-primary);
+}
+
+.player-name {
+    flex-grow: 1;
+}
+
+.player-role {
+    margin-right: 10px;
+    color: var(--color-info);
+    font-weight: 700;
+}
+
+.player-status {
+    margin-left: 5px;
+    font-size: 0.9em;
+}
+
+.player-disconnected {
+    color: var(--color-error);
+}
+
+.player-current {
+    font-weight: bold;
+    color: var(--color-success);
+}
+
+/* Style pour le joueur actuel (soi-même) */
+.players-list li.self {
+    border-left-color: var(--color-success);
+    background: var(--gradient-success-overlay);
+}
+
+/* Style pour le présentateur */
+.players-list li.host {
+    border-left-color: var(--color-danger);
+    background: var(--gradient-danger-overlay);
+}
+
+/* Style pour joueur déconnecté */
+.players-list li.disconnected {
+    opacity: 0.7;
+    filter: grayscale(30%);
+    border-left-color: var(--color-warning);
+}
+
+/* Banned players list styling */
+#bannedPlayersList {
+    list-style: none;
+    padding: 0;
+}
+
+#bannedPlayersList li {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 10px;
+    background: var(--overlay-light);
+    border-radius: 8px;
+    margin-bottom: 6px;
+}
+
+#bannedPlayersList li .ban-name {
+    font-weight: 600;
+    color: var(--color-text-light);
+}
+
+#bannedPlayersList li .unban-btn {
+    padding: 6px 10px;
+    font-size: 13px;
+}
+
+.unban-local-btn {
+    margin-left: 10px;
+}
+
+#bannedWordsSort {
+    width: 151px;
+}

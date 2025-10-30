@@ -1,0 +1,159 @@
+/* Roue de la Fortune - 100% CSS */
+
+.wheel-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    position: relative;
+}
+
+.wheel-wrapper {
+    position: relative;
+    width: 600px;
+    height: 600px;
+}
+
+/* La roue principale */
+.wheel {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    position: relative;
+    box-shadow: var(--shadow-xl);
+    border: 10px solid var(--color-secondary);
+    transform-origin: center;
+    transition: transform 4s cubic-bezier(0.17, 0.67, 0.12, 0.99);
+}
+
+/* Centre de la roue */
+.wheel-center {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 80px;
+    height: 80px;
+    background: var(--gradient-gold);
+    border-radius: 50%;
+    z-index: 100;
+    box-shadow: var(--shadow-gold-glow);
+    border: 5px solid white;
+}
+
+/* Flèche indicatrice */
+.wheel-pointer {
+    position: absolute;
+    top: -40px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 0;
+    height: 0;
+    border-left: 30px solid transparent;
+    border-right: 30px solid transparent;
+    border-top: 50px solid var(--color-danger);
+    z-index: 101;
+    filter: var(--filter-drop-shadow);
+}
+
+/* Segments de la roue - 22 segments */
+.wheel-segment {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    clip-path: polygon(50% 50%, 50% 0%, 54.5% 0%);
+    transform-origin: center;
+}
+
+/* Texte dans les segments */
+.segment-text {
+    position: absolute;
+    top: 15%;
+    left: 50%;
+    transform: translateX(-50%) rotate(0deg);
+    font-weight: bold;
+    font-size: 14px;
+    text-align: center;
+    color: white;
+    text-shadow: var(--text-shadow-sm);
+    width: 100px;
+}
+
+/* Rotation des 22 segments (360/22 = 16.36 degrés par segment) */
+.wheel-segment:nth-child(1) { transform: rotate(0deg); }
+.wheel-segment:nth-child(2) { transform: rotate(16.36deg); }
+.wheel-segment:nth-child(3) { transform: rotate(32.72deg); }
+.wheel-segment:nth-child(4) { transform: rotate(49.08deg); }
+.wheel-segment:nth-child(5) { transform: rotate(65.44deg); }
+.wheel-segment:nth-child(6) { transform: rotate(81.8deg); }
+.wheel-segment:nth-child(7) { transform: rotate(98.16deg); }
+.wheel-segment:nth-child(8) { transform: rotate(114.52deg); }
+.wheel-segment:nth-child(9) { transform: rotate(130.88deg); }
+.wheel-segment:nth-child(10) { transform: rotate(147.24deg); }
+.wheel-segment:nth-child(11) { transform: rotate(163.6deg); }
+.wheel-segment:nth-child(12) { transform: rotate(179.96deg); }
+.wheel-segment:nth-child(13) { transform: rotate(196.32deg); }
+.wheel-segment:nth-child(14) { transform: rotate(212.68deg); }
+.wheel-segment:nth-child(15) { transform: rotate(229.04deg); }
+.wheel-segment:nth-child(16) { transform: rotate(245.4deg); }
+.wheel-segment:nth-child(17) { transform: rotate(261.76deg); }
+.wheel-segment:nth-child(18) { transform: rotate(278.12deg); }
+.wheel-segment:nth-child(19) { transform: rotate(294.48deg); }
+.wheel-segment:nth-child(20) { transform: rotate(310.84deg); }
+.wheel-segment:nth-child(21) { transform: rotate(327.2deg); }
+.wheel-segment:nth-child(22) { transform: rotate(343.56deg); }
+
+/* Animation de rotation */
+.wheel.spinning {
+    animation: spin 4s cubic-bezier(0.17, 0.67, 0.12, 0.99) forwards;
+}
+
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(var(--spin-rotation, 1800deg));
+    }
+}
+
+/* Résultat de la roue */
+.wheel-result {
+    position: absolute;
+    bottom: -100px;
+    left: 50%;
+    transform: translateX(-50%) scale(0);
+    background: var(--gradient-gold);
+    color: var(--color-text-dark);
+    padding: 20px 40px;
+    border-radius: 12px;
+    font-size: 24px;
+    font-weight: bold;
+    box-shadow: var(--shadow-gold-strong);
+    transition: transform 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+.wheel-result:not(.hidden) {
+    transform: translateX(-50%) scale(1);
+}
+
+@keyframes resultPop {
+    0% {
+        transform: translateX(-50%) scale(0) rotate(-180deg);
+        opacity: 0;
+    }
+    60% {
+        transform: translateX(-50%) scale(1.2) rotate(10deg);
+    }
+    100% {
+        transform: translateX(-50%) scale(1) rotate(0deg);
+        opacity: 1;
+    }
+}
+
+/* Fond chroma key */
+body.chroma-key {
+    background: var(--color-chroma-green) !important;
+}

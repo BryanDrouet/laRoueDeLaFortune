@@ -1,0 +1,105 @@
+/* ====================================
+   LA ROUE DE LA FORTUNE M6
+   Fichier de couleurs
+   ==================================== */
+
+:root {
+    /* Couleurs principales */
+    --color-primary: #0066CC;
+    --color-secondary: #FFD700;
+    --color-background: #1a1a2e;
+    --color-background-light: #2d2d44;
+    --color-text-light: #FFFFFF;
+    --color-text-dark: #000000;
+    
+    /* Couleurs de statut */
+    --color-success: #4CAF50;
+    --color-danger: #F44336;
+    --color-warning: #FF9800;
+    --color-info: #2196F3;
+    
+    /* Couleurs de la roue */
+    --wheel-color-1: #FF6B35;
+    --wheel-color-2: #F7931E;
+    --wheel-color-3: #FBB03B;
+    --wheel-color-4: #FFDD00;
+    --wheel-color-5: #92D050;
+    --wheel-color-6: #00B050;
+    --wheel-color-7: #00B0F0;
+    --wheel-color-8: #0070C0;
+    --wheel-color-9: #7030A0;
+    --wheel-color-10: #C00000;
+    --wheel-color-11: #FF0000;
+    --wheel-color-12: #E91E63;
+    --wheel-color-13: #9C27B0;
+    --wheel-color-14: #FFD700;
+    --wheel-color-15: #000000;
+    --wheel-color-16: #FFFFFF;
+    --wheel-color-17: #FF4444;
+    --wheel-color-18: #4CAF50;
+    --wheel-color-19: #2196F3;
+    --wheel-color-20: #FF9800;
+    --wheel-color-21: #9C27B0;
+    --wheel-color-22: #795548;
+    
+    /* Couleurs du puzzle */
+    --puzzle-hidden: #003366;
+    --puzzle-revealed: #FFD700;
+    --puzzle-border: #FFFFFF;
+    
+    /* Couleurs pour le chroma key */
+    --color-chroma-green: #00FF00;
+    
+    /* Couleurs des joueurs */
+    --player-1-color: #FF6B35;
+    --player-2-color: #4CAF50;
+    --player-3-color: #2196F3;
+    --player-4-color: #9C27B0;
+    
+    /* Dégradés */
+    --gradient-gold: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
+    --gradient-blue: linear-gradient(135deg, #0066CC 0%, #004499 100%);
+    --gradient-dark: linear-gradient(180deg, #1a1a2e 0%, #16213e 100%);
+    --gradient-light-overlay: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(0,0,0,0.03));
+    --gradient-success-overlay: linear-gradient(180deg, rgba(0,128,0,0.03), rgba(0,0,0,0.02));
+    --gradient-danger-overlay: linear-gradient(180deg, rgba(255,0,0,0.03), rgba(0,0,0,0.02));
+    
+    /* Ombres (box-shadow) */
+    --shadow-sm: 0 2px 6px rgba(0,0,0,0.2);
+    --shadow-md: 0 4px 10px rgba(0,0,0,0.25);
+    --shadow-lg: 0 4px 15px rgba(0,0,0,0.3);
+    --shadow-xl: 0 10px 50px rgba(0,0,0,0.5);
+    --shadow-focus: 0 0 10px rgba(255, 215, 0, 0.5);
+    --shadow-gold: 0 4px 15px rgba(255, 215, 0, 0.4);
+    --shadow-gold-hover: 0 6px 20px rgba(255, 215, 0, 0.6);
+    --shadow-gold-light: 0 2px 8px rgba(255,215,0,0.08);
+    --shadow-gold-glow: 0 0 20px rgba(255, 215, 0, 0.8);
+    --shadow-gold-strong: 0 4px 20px rgba(255, 215, 0, 0.6);
+    --shadow-blue: 0 4px 15px rgba(0, 102, 204, 0.4);
+    --shadow-blue-hover: 0 6px 20px rgba(0, 102, 204, 0.6);
+    --shadow-inset: inset 0 0 0 2px rgba(0,0,0,0.08);
+    --shadow-soft: 0 4px 10px rgba(0,0,0,0.12);
+    
+    /* Ombres de texte (text-shadow) */
+    --text-shadow-sm: 1px 1px 3px rgba(0,0,0,0.8);
+    --text-shadow-md: 2px 2px 4px rgba(0,0,0,0.5);
+    --text-shadow-lg: 2px 2px 8px rgba(0,0,0,0.8);
+    
+    /* Filtres */
+    --filter-drop-shadow: drop-shadow(0 4px 8px rgba(0,0,0,0.5));
+    
+    /* Couleurs avec transparence (overlays & backgrounds) */
+    --overlay-dark: rgba(0, 0, 0, 0.8);
+    --overlay-light: rgba(255,255,255,0.02);
+    --overlay-warning: rgba(255, 165, 0, 0.1);
+    --overlay-secondary: rgba(255, 215, 0, 0.1);
+    --overlay-white-03: rgba(255, 255, 255, 0.03);
+    --overlay-white-06: rgba(255,255,255,0.06);
+    
+    /* Bordures avec transparence */
+    --border-light: 1px solid rgba(255,255,255,0.04);
+    --border-semi: 1px solid rgba(255,255,255,0.06);
+    
+    /* Couleur pour toggle switch */
+    --toggle-bg: #ccc;
+}

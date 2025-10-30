@@ -1,0 +1,593 @@
+/* Dashboard Gérant */
+
+.dashboard-container {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    padding: 20px;
+}
+
+.dashboard-section {
+    background: var(--color-background-light);
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: var(--shadow-lg);
+}
+
+.dashboard-section h3 {
+    border-bottom: 3px solid var(--color-secondary);
+    padding-bottom: 10px;
+    margin-bottom: 20px;
+}
+
+/* Vue Joueur */
+#playerView {
+    padding: 20px;
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+.player-identity {
+    margin-bottom: 15px;
+    padding: 10px 15px;
+    background: var(--color-background-light);
+    border-left: 5px solid var(--color-secondary);
+    border-radius: 8px;
+    font-weight: bold;
+}
+
+/* Notification de tour du joueur */
+.player-turn-notification {
+    background: linear-gradient(135deg, var(--color-secondary), var(--color-warning));
+    padding: 20px;
+    box-shadow: 0 4px 20px rgba(255, 215, 0, 0.5);
+    animation: pulse 2s infinite;
+    margin-bottom: 40px;
+    border-radius: 20px;
+}
+
+.turn-notification-content {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 20px;
+}
+
+.turn-icon {
+    font-size: 36px;
+    animation: bounce 1s infinite;
+}
+
+.turn-text {
+    font-size: 32px;
+    font-weight: bold;
+    color: var(--color-text-dark);
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+@keyframes pulse {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.8;
+    }
+}
+
+@keyframes bounce {
+    0%, 100% {
+        transform: translateY(0);
+    }
+    50% {
+        transform: translateY(-10px);
+    }
+}
+
+.player-puzzle-section {
+    margin-bottom: 40px;
+    text-align: center;
+}
+
+.player-puzzle-section .puzzle-category {
+    font-size: 32px;
+    margin-bottom: 30px;
+}
+
+/* Buzzer */
+.buzzer-section {
+    margin-top: 30px;
+}
+
+.buzzer-btn {
+    padding: 20px 40px;
+    font-size: 28px;
+    font-weight: bold;
+    background: linear-gradient(135deg, var(--color-danger), var(--color-warning));
+    color: var(--color-text-light);
+    border: 3px solid var(--color-secondary);
+    border-radius: 50px;
+    cursor: pointer;
+    transition: all 0.3s;
+    box-shadow: 0 8px 20px rgba(244, 67, 54, 0.4);
+    animation: buzzerpulse 1.5s infinite;
+}
+
+.buzzer-btn:hover {
+    transform: scale(1.05);
+    box-shadow: 0 12px 30px rgba(244, 67, 54, 0.6);
+}
+
+@keyframes buzzerpulse {
+    0%, 100% {
+        box-shadow: 0 8px 20px rgba(244, 67, 54, 0.4);
+    }
+    50% {
+        box-shadow: 0 8px 30px rgba(244, 67, 54, 0.8);
+    }
+}
+
+.buzzer-proposal {
+    margin-top: 20px;
+    padding: 20px;
+    background: var(--color-background-light);
+    border-radius: 12px;
+}
+
+.buzzer-input {
+    width: 100%;
+    padding: 15px;
+    font-size: 20px;
+    border: 2px solid var(--color-secondary);
+    border-radius: 8px;
+    background: var(--color-background);
+    color: var(--color-text-light);
+    margin-bottom: 15px;
+    text-transform: uppercase;
+}
+
+.buzzer-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+}
+
+.buzzer-actions button {
+    padding: 12px 30px;
+    font-size: 18px;
+}
+
+.player-puzzle-section .puzzle-grid {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px;
+}
+
+.player-wheel-section {
+    background: var(--color-background-light);
+    border-radius: 12px;
+    padding: 30px;
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.wheel-display {
+    margin-top: 20px;
+}
+
+.wheel-value-large {
+    font-size: 72px;
+    font-weight: bold;
+    color: var(--color-secondary);
+    text-shadow: var(--text-shadow-lg);
+    padding: 30px;
+    background: var(--gradient-dark);
+    border-radius: 12px;
+}
+
+.player-scores-section, .wheel-info {
+    background: var(--color-background-light);
+    border-radius: 12px;
+    padding: 30px;
+}
+
+.scores-display {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+    margin-top: 20px;
+}
+
+.player-score-card {
+    background: var(--gradient-dark);
+    padding: 20px;
+    border-radius: 10px;
+    text-align: center;
+    border-left: 5px solid var(--color-primary);
+}
+
+.player-score-card.active {
+    border-left-color: var(--color-secondary);
+    box-shadow: 0 0 20px rgba(255, 215, 0, 0.3);
+}
+
+.player-score-card .player-score-name {
+    font-size: 24px;
+    font-weight: bold;
+    margin-bottom: 10px;
+    color: var(--color-text-light);
+}
+
+.player-score-card .player-score-money {
+    font-size: 36px;
+    color: var(--color-secondary);
+    font-weight: bold;
+}
+
+.player-score-card .player-score-total {
+    font-size: 18px;
+    color: var(--color-info);
+    margin-top: 10px;
+}
+
+/* Contrôles du jeu */
+.game-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+/* Roue dans le dashboard */
+.wheel-container-dashboard {
+    position: relative;
+    width: 300px;
+    height: 300px;
+    margin: 20px auto;
+}
+
+.wheel-pointer {
+    position: absolute;
+    top: -10px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 40px;
+    color: var(--color-secondary);
+    z-index: 10;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+.wheel-dashboard {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    position: relative;
+    border: 8px solid var(--color-secondary);
+    box-shadow: 0 0 30px rgba(255, 215, 0, 0.5);
+    transition: transform 4s cubic-bezier(0.17, 0.67, 0.12, 0.99);
+}
+
+.wheel-dashboard .wheel-segment {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    left: 0;
+    top: 0;
+    transform-origin: center;
+}
+
+.wheel-dashboard .segment-text {
+    position: absolute;
+    top: 15%;
+    left: 50%;
+    font-weight: bold;
+    font-size: 14px;
+    color: #FFFFFF;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+    white-space: nowrap;
+}
+
+.control-btn {
+    width: 100%;
+    padding: 15px;
+    font-size: 18px;
+}
+
+/* Info de la roue */
+.wheel-info {
+    text-align: center;
+    padding: 30px;
+    border-radius: 12px;
+    margin: 20px 0;
+}
+
+.wheel-value {
+    font-size: 48px;
+    font-weight: bold;
+    color: var(--color-secondary);
+    text-shadow: var(--text-shadow-lg);
+}
+
+/* Liste des joueurs dashboard */
+.dashboard-players {
+    display: grid;
+    gap: 15px;
+}
+
+.dashboard-player {
+    background: var(--color-background);
+    padding: 20px;
+    border-radius: 10px;
+    border-left: 5px solid var(--player-1-color);
+    display: grid;
+    grid-template-columns: 1fr auto auto;
+    align-items: center;
+    gap: 20px;
+    position: relative;
+}
+
+.dashboard-player.player-2 { border-left-color: var(--player-2-color); }
+.dashboard-player.player-3 { border-left-color: var(--player-3-color); }
+.dashboard-player.player-4 { border-left-color: var(--player-4-color); }
+
+.dashboard-player.active {
+    box-shadow: 0 0 20px var(--color-secondary);
+    border-left-width: 8px;
+}
+
+.dashboard-player.disconnected {
+    opacity: 0.5;
+}
+
+.dashboard-player.disconnected::after {
+    content: "⚠️ Déconnecté";
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    background: var(--color-warning);
+    color: var(--color-text-dark);
+    padding: 3px 8px;
+    border-radius: 5px;
+    font-size: 12px;
+}
+
+.player-name {
+    font-size: 24px;
+    font-weight: bold;
+}
+
+.player-money {
+    text-align: right;
+}
+
+.round-money {
+    font-size: 28px;
+    color: var(--color-warning);
+    font-weight: bold;
+}
+
+.total-money {
+    font-size: 20px;
+    color: var(--color-success);
+}
+
+.player-actions {
+    display: flex;
+    gap: 5px;
+}
+
+.player-actions button {
+    padding: 5px 10px;
+    font-size: 12px;
+}
+
+/* Info de manche */
+.round-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px;
+    background: var(--gradient-blue);
+    border-radius: 10px;
+    margin-bottom: 20px;
+}
+
+.current-round {
+    font-size: 24px;
+    font-weight: bold;
+}
+
+.round-type {
+    display: inline-block;
+    margin-left: 15px;
+    padding: 5px 15px;
+    font-size: 16px;
+    border-radius: 20px;
+    background: var(--color-warning);
+    color: var(--color-text-dark);
+    font-weight: bold;
+}
+
+.current-player {
+    font-size: 20px;
+    color: var(--color-secondary);
+}
+
+.self-identity {
+    margin-left: 10px;
+    font-weight: bold;
+}
+
+/* Actions spéciales */
+.special-actions {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+    margin-top: 20px;
+}
+
+.special-btn {
+    padding: 10px;
+    font-size: 14px;
+}
+
+/* Paramètres */
+.settings-grid {
+    display: grid;
+    gap: 15px;
+}
+
+.setting-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px;
+    background: var(--color-background);
+    border-radius: 8px;
+}
+
+.toggle-switch {
+    position: relative;
+    width: 60px;
+    height: 30px;
+}
+
+.toggle-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.toggle-slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: var(--toggle-bg);
+    transition: 0.4s;
+    border-radius: 30px;
+}
+
+.toggle-slider:before {
+    position: absolute;
+    content: "";
+    height: 22px;
+    width: 22px;
+    left: 4px;
+    bottom: 4px;
+    background-color: white;
+    transition: 0.4s;
+    border-radius: 50%;
+}
+
+input:checked + .toggle-slider {
+    background-color: var(--color-success);
+}
+
+input:checked + .toggle-slider:before {
+    transform: translateX(30px);
+}
+
+/* Chat intégré */
+.chat-container {
+    display: flex;
+    flex-direction: column;
+    height: 400px;
+}
+
+.chat-messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 15px;
+    background: var(--color-background);
+    border-radius: 8px;
+    margin-bottom: 10px;
+}
+
+.chat-message {
+    margin-bottom: 10px;
+    padding: 8px 12px;
+    background: var(--color-background-light);
+    border-radius: 8px;
+}
+
+.chat-sender {
+    font-weight: bold;
+    color: var(--color-secondary);
+}
+
+.chat-input-group {
+    display: flex;
+    gap: 10px;
+}
+
+.chat-input {
+    flex: 1;
+}
+
+/* Responsive Dashboard */
+@media (max-width: 1024px) {
+    .dashboard-container {
+        grid-template-columns: 1fr;
+    }
+    
+    .special-actions {
+        grid-template-columns: 1fr;
+    }
+    
+    .dashboard-player {
+        grid-template-columns: 1fr;
+        gap: 10px;
+    }
+}
+
+@media (max-width: 768px) {
+    .dashboard-container {
+        padding: 10px;
+        gap: 15px;
+    }
+    
+    .dashboard-section {
+        padding: 15px;
+    }
+    
+    .control-btn {
+        padding: 12px;
+        font-size: 16px;
+    }
+    
+    .wheel-value {
+        font-size: 36px;
+    }
+    
+    .player-name {
+        font-size: 20px;
+    }
+    
+    .round-money {
+        font-size: 24px;
+    }
+    
+    .chat-container {
+        height: 300px;
+    }
+}
+
+@media (max-width: 480px) {
+    .round-info {
+        flex-direction: column;
+        gap: 10px;
+        text-align: center;
+    }
+    
+    .current-round,
+    .current-player {
+        font-size: 18px;
+    }
+    
+    .setting-item {
+        flex-direction: column;
+        gap: 10px;
+    }
+}

@@ -1,0 +1,174 @@
+/* Grille de puzzle */
+
+.puzzle-container {
+    padding: 40px 20px;
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+.puzzle-category {
+    text-align: center;
+    font-size: 28px;
+    font-weight: bold;
+    color: var(--color-secondary);
+    margin-bottom: 30px;
+    text-transform: uppercase;
+    letter-spacing: 3px;
+    text-shadow: var(--text-shadow-md);
+}
+
+.puzzle-grid {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px;
+    margin-bottom: 20px;
+}
+
+.puzzle-word {
+    display: flex;
+    gap: 6px;
+    margin: 5px 15px;
+}
+
+.puzzle-letter {
+    width: 50px;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 32px;
+    font-weight: bold;
+    border-radius: 8px;
+    border: 3px solid var(--puzzle-border);
+    transition: all 0.5s;
+    position: relative;
+    overflow: hidden;
+}
+
+.puzzle-letter.hidden {
+    background: var(--puzzle-hidden);
+    color: transparent;
+}
+
+.puzzle-letter.revealed {
+    background: var(--puzzle-revealed);
+    color: var(--color-text-dark);
+}
+
+/* Animation uniquement lors de l'apparition immédiate (pas en boucle) */
+.puzzle-letter.just-revealed {
+    animation: revealLetter 0.8s ease-out;
+}
+
+.puzzle-letter.space {
+    background: transparent;
+    border: none;
+    width: 20px;
+}
+
+@keyframes revealLetter {
+    0% {
+        transform: scale(0.5) rotateY(180deg);
+        opacity: 0;
+    }
+    50% {
+        transform: scale(1.3) rotateY(90deg);
+        opacity: 0.5;
+    }
+    70% {
+        transform: scale(1.1) rotateY(45deg);
+        opacity: 0.8;
+    }
+    100% {
+        transform: scale(1) rotateY(0deg);
+        opacity: 1;
+    }
+}
+
+/* Clavier alphabet */
+.alphabet-keyboard {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px;
+    max-width: 800px;
+    margin: 30px auto;
+}
+
+.letter-key {
+    width: 50px;
+    height: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    font-weight: bold;
+    background: var(--color-primary);
+    color: white;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s;
+    border: 2px solid var(--color-primary);
+}
+
+.letter-key:hover {
+    transform: scale(1.1);
+    background: var(--color-secondary);
+    color: var(--color-text-dark);
+}
+
+.letter-key.selected {
+    transform: scale(1.15);
+    background: var(--color-secondary);
+    color: var(--color-text-dark);
+    border: 3px solid var(--color-warning);
+    box-shadow: 0 0 20px rgba(255, 215, 0, 0.8);
+}
+
+.letter-key.used {
+    background: var(--color-background-light);
+    color: var(--color-text-light);
+    opacity: 0.3;
+    cursor: not-allowed;
+    animation: letterUsed 0.5s ease-out;
+}
+
+@keyframes letterUsed {
+    0% {
+        transform: scale(1) rotate(0deg);
+        opacity: 1;
+    }
+    50% {
+        transform: scale(0.8) rotate(180deg);
+        opacity: 0.5;
+    }
+    100% {
+        transform: scale(1) rotate(360deg);
+        opacity: 0.3;
+    }
+}
+
+.letter-key.consonant {
+    border-color: var(--color-info);
+}
+
+.letter-key.vowel {
+    border-color: var(--color-warning);
+    background: var(--gradient-gold);
+    color: var(--color-text-dark);
+    cursor: not-allowed;
+    opacity: 0.95;
+}
+
+/* Désactiver l'effet hover pour les voyelles (non cliquables) */
+.letter-key.vowel:hover {
+    transform: none;
+    background: var(--gradient-gold);
+    color: var(--color-text-dark);
+}
+
+/* Fond chroma key */
+body.chroma-key .puzzle-container {
+    background: var(--color-chroma-green);
+}

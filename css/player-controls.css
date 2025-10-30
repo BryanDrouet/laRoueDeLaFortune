@@ -1,0 +1,32 @@
+.player-controls {
+    display: flex;
+    gap: 5px;
+    margin-left: auto;
+}
+
+.player-controls button {
+    padding: 2px 8px;
+    font-size: 0.9em;
+}
+
+.players-list li {
+    display: flex;
+    align-items: center;
+    padding: 8px;
+    background: var(--color-bg-secondary);
+    border-radius: 4px;
+    margin-bottom: 5px;
+}
+
+.player-name {
+    flex-grow: 1;
+}
+
+.player-role {
+    margin-right: 10px;
+    color: var(--color-info);
+}
+
+.host .player-role {
+    color: var(--color-warning);
+}
