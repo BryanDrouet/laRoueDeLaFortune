@@ -1,0 +1,39 @@
+{
+  "categories": [
+    "PERSONNAGE CÉLÈBRE",
+    "TITRE DE FILM",
+    "EXPRESSION",
+    "LIEU",
+    "MÉTIER",
+    "OBJET",
+    "ÉVÉNEMENT",
+    "CHANSON"
+  ],
+  "puzzles": [
+    {"category": "EXPRESSION", "solution": "TOURNER SEPT FOIS SA LANGUE DANS SA BOUCHE"},
+    {"category": "PERSONNAGE CÉLÈBRE", "solution": "ERIC ANTOINE"},
+    {"category": "TITRE DE FILM", "solution": "LE SEIGNEUR DES ANNEAUX"},
+    {"category": "LIEU", "solution": "LA TOUR EIFFEL"},
+    {"category": "EXPRESSION", "solution": "AVOIR LE COEUR SUR LA MAIN"},
+    {"category": "MÉTIER", "solution": "POMPIER"},
+    {"category": "OBJET", "solution": "ORDINATEUR PORTABLE"},
+    {"category": "EXPRESSION", "solution": "METTRE LA CHARRUE AVANT LES BOEUFS"},
+    {"category": "PERSONNAGE CÉLÈBRE", "solution": "LEONARDO DICAPRIO"},
+    {"category": "TITRE DE FILM", "solution": "RETOUR VERS LE FUTUR"},
+    {"category": "LIEU", "solution": "LES CHAMPS ELYSEES"},
+    {"category": "CHANSON", "solution": "LA VIE EN ROSE"},
+    {"category": "ÉVÉNEMENT", "solution": "COUPE DU MONDE DE FOOTBALL"},
+    {"category": "OBJET", "solution": "MACHINE A LAVER"},
+    {"category": "MÉTIER", "solution": "ARCHITECTE"},
+    {"category": "EXPRESSION", "solution": "IL PLEUT DES CORDES"},
+    {"category": "PERSONNAGE CÉLÈBRE", "solution": "NAPOLEON BONAPARTE"},
+    {"category": "TITRE DE FILM", "solution": "HARRY POTTER ET LA PIERRE PHILOSOPHALE"},
+    {"category": "LIEU", "solution": "MONT SAINT MICHEL"},
+    {"category": "CHANSON", "solution": "IMAGINE"},
+    {"category": "ÉVÉNEMENT", "solution": "JOUR DE L AN"},
+    {"category": "OBJET", "solution": "TELEPHONE PORTABLE"},
+    {"category": "EXPRESSION", "solution": "CASSER LES PIEDS"},
+    {"category": "MÉTIER", "solution": "BOULANGER"},
+    {"category": "PERSONNAGE CÉLÈBRE", "solution": "ZINEDINE ZIDANE"}
+  ]
+}
