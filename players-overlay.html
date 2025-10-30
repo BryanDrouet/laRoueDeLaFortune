@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Joueurs Overlay - La Roue de la Fortune</title>
+    <link rel="stylesheet" href="css/colors.css">
+    <link rel="stylesheet" href="css/main.css">
+    <script>
+        // Overlay public - vérifier uniquement que le code de room est fourni
+        const urlParams = new URLSearchParams(window.location.search);
+        const roomCode = urlParams.get('room');
+        
+        if (!roomCode) {
+            document.body.innerHTML = '';
+            document.body.style.background = 'white';
+        } else {
+            // Vérifier si la room existe dans le localStorage
+            const roomData = localStorage.getItem(`room_${roomCode}`);
+            if (!roomData) {
+                // La room n'existe pas ou a été supprimée - afficher une page blanche
+                document.body.innerHTML = '';
+                document.body.style.background = 'white';
+            }
+        }
+    </script>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: var(--color-background);
+        }
+
+        .players-overlay-container {
+            display: flex;
+            justify-content: space-around;
+            padding: 20px;
+            gap: 20px;
+        }
+
+
+        .player-card {
+            background: var(--color-background-light);
+            border-radius: 12px;
+            padding: 20px;
+            min-width: 200px;
+            text-align: center;
+            border: 4px solid transparent;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+            transition: all 0.3s;
+        }
+
+        .player-card.active {
+            border-color: var(--color-secondary);
+            box-shadow: 0 0 30px var(--color-secondary);
+        }
+
+        .player-card.player-1 { border-top: 6px solid var(--player-1-color); }
+        .player-card.player-2 { border-top: 6px solid var(--player-2-color); }
+        .player-card.player-3 { border-top: 6px solid var(--player-3-color); }
+        .player-card.player-4 { border-top: 6px solid var(--player-4-color); }
+
+        .player-card-name {
+            font-size: 24px;
+            font-weight: bold;
+            color: var(--color-text-light);
+            margin-bottom: 15px;
+        }
+
+        .player-card-round-money {
+            font-size: 32px;
+            font-weight: bold;
+            color: var(--color-warning);
+            margin-bottom: 10px;
+        }
+
+        .player-card-total-money {
+            font-size: 20px;
+            color: var(--color-success);
+        }
+
+        .money-label {
+            font-size: 14px;
+            color: var(--color-text-light);
+            opacity: 0.8;
+        }
+    </style>
+</head>
+<body>
+    <div class="players-overlay-container" id="playersOverlay">
+        <!-- Les cartes de joueurs seront générées par JavaScript -->
+    </div>
+
+    <script type="module" src="js/app.js"></script>
+</body>
+</html>

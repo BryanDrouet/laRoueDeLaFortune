@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Roue Overlay - La Roue de la Fortune</title>
+    <link rel="stylesheet" href="css/colors.css">
+    <link rel="stylesheet" href="css/wheel.css">
+    <script>
+        // Overlay public - vérifier uniquement que le code de room est fourni
+        const urlParams = new URLSearchParams(window.location.search);
+        const roomCode = urlParams.get('room');
+        
+        if (!roomCode) {
+            document.body.innerHTML = '';
+            document.body.style.background = 'white';
+        } else {
+            // Vérifier si la room existe dans le localStorage
+            const roomData = localStorage.getItem(`room_${roomCode}`);
+            if (!roomData) {
+                // La room n'existe pas ou a été supprimée - afficher une page blanche
+                document.body.innerHTML = '';
+                document.body.style.background = 'white';
+            }
+        }
+    </script>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: var(--color-background);
+        }
+    </style>
+</head>
+<body>
+    <div class="wheel-container">
+        <div class="wheel-wrapper">
+            <div class="wheel-pointer"></div>
+            <div class="wheel" id="wheelElement">
+                <!-- Les 22 segments seront générés par JavaScript -->
+            </div>
+            <div class="wheel-center"></div>
+        </div>
+        <div class="wheel-result hidden" id="wheelResult"></div>
+    </div>
+
+    <script type="module" src="js/app.js"></script>
+</body>
+</html>

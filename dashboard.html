@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Gérant - La Roue de la Fortune</title>
+    <link rel="stylesheet" href="css/colors.css">
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/dashboard.css">
+    <link rel="stylesheet" href="css/puzzle.css">
+    <script>
+        // Protection - rediriger si pas de session active OU si joueur non enregistré dans la room
+        const urlParams = new URLSearchParams(window.location.search);
+        const roomCodeFromUrl = urlParams.get('room');
+        const roomCodeFromSession = sessionStorage.getItem('currentRoomCode');
+        const roomCode = roomCodeFromUrl || roomCodeFromSession;
+        
+        if (!roomCode) {
+            window.location.href = 'index.html';
+        } else {
+            // Vérifier que le joueur existe dans la room
+            const roomData = localStorage.getItem(`room_${roomCode}`);
+            const playerDataStr = sessionStorage.getItem('currentPlayerData');
+            
+            if (!roomData || !playerDataStr) {
+                alert('Vous devez d\'abord rejoindre cette partie depuis la page d\'accueil.');
+                window.location.href = 'index.html';
+            } else {
+                try {
+                    const room = JSON.parse(roomData);
+                    const playerData = JSON.parse(playerDataStr);
+                    
+                    // Vérifier que le joueur est bien dans la liste des joueurs de la room
+                    const playerExists = room.players.some(p => p.id === playerData.id);
+                    
+                    if (!playerExists) {
+                        alert('Vous n\'êtes pas enregistré dans cette partie.');
+                        window.location.href = 'index.html';
+                    }
+                } catch (e) {
+                    console.error('Erreur de validation:', e);
+                    window.location.href = 'index.html';
+                }
+            }
+        }
+    </script>
+</head>
+<body>
+    <header id="dashboardHeader" class="hidden">
+        <h1 id="dashboardTitle">🎬 DASHBOARD GÉRANT 🎬</h1>
+        <p>Basé sur le jeu télé d'Éric Antoine - M6</p>
+        <div id="gameStatus" class="game-status"></div>
+    </header>
+
+    <div class="container">
+        <!-- Info de la manche -->
+        <div class="round-info">
+            <div class="current-round">
+                Manche <span id="currentRound">1</span> / 5
+                <span id="roundType" class="round-type"></span>
+            </div>
+            <div class="current-player">
+                Tour de : <span id="currentPlayerName">-</span>
+                <span class="self-identity"> — Vous êtes : <span id="playerSelfName">-</span></span>
+            </div>
+        </div>
+
+        <!-- Vue Gérant (contrôles complets) -->
+        <div id="hostView" class="dashboard-container">
+            <!-- Contrôles principaux -->
+            <div class="dashboard-section">
+                <h3>🎮 Contrôles du jeu</h3>
+                
+                <div class="game-controls">
+                    <button class="btn btn-primary control-btn" id="spinWheelBtn">
+                        🎡 FAIRE TOURNER LA ROUE
+                    </button>
+
+                    <!-- Aperçu de la roue (gérant) - Code overlay -->
+                    <div class="wheel-container">
+                        <div class="wheel-wrapper">
+                            <div class="wheel-pointer"></div>
+                            <div class="wheel" id="wheelElement">
+                                <!-- Les segments seront générés par JavaScript -->
+                            </div>
+                            <div class="wheel-center"></div>
+                        </div>
+                        <div class="wheel-result hidden" id="wheelResult"></div>
+                    </div>
+
+                    <div class="wheel-info" id="wheelResultDisplay">
+                        <div>🎡 Résultat de la roue :</div>
+                        <div class="wheel-value" id="wheelValue">-</div>
+                    </div>
+
+                    <button class="btn btn-success control-btn" id="validateLetterBtn" disabled>
+                        ✓ Valider la lettre
+                    </button>
+
+                    <button class="btn btn-warning control-btn" id="buyvowelBtn" disabled>
+                        Acheter une voyelle (250€)
+                    </button>
+
+                    <button class="btn btn-info control-btn" id="solvePuzzleBtn" disabled>
+                        🏆 Joueur résout l'énigme
+                    </button>
+
+                    <button class="btn btn-secondary control-btn" id="nextPlayerBtn" disabled>
+                        ➡️ Joueur suivant
+                    </button>
+                </div>
+
+                <!-- Actions spéciales -->
+                <div class="special-actions">
+                    <button class="btn btn-warning special-btn" id="holdupBtn">
+                        💰 Hold Up
+                    </button>
+                    <button class="btn btn-info special-btn" id="swapBtn">
+                        🔄 Échange
+                    </button>
+                    <button class="btn btn-primary special-btn" id="divideBtn">
+                        ➗ Diviseur
+                    </button>
+                </div>
+            </div>
+
+            <!-- Joueurs -->
+            <div class="dashboard-section">
+                <h3>👥 Joueurs</h3>
+                <div id="dashboardPlayers" class="dashboard-players"></div>
+            </div>
+
+            <!-- Puzzle (vue gérant, identique aux joueurs) -->
+            <div class="dashboard-section">
+                <h3>🧩 Puzzle</h3>
+                <div class="player-puzzle-section">
+                    <h2 id="puzzleCategory" class="puzzle-category">CATÉGORIE</h2>
+                    <div id="puzzleGrid" class="puzzle-grid"></div>
+                </div>
+            </div>
+
+            <!-- Clavier de lettres -->
+            <div class="dashboard-section">
+                <h3>🔤 Lettres proposées</h3>
+                <div id="letterKeyboard" class="alphabet-keyboard"></div>
+            </div>
+
+            <!-- Paramètres -->
+            <div class="dashboard-section">
+                <h3>⚙️ Paramètres</h3>
+                <div class="settings-grid">
+                    <div class="setting-item">
+                        <span>Mode Streameur</span>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="streamerModeToggle">
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                    <div id="overlayLinks" class="hidden overlay-links">
+                        <p><strong>URLs des overlays :</strong></p>
+                        <p class="overlay-url" id="wheelOverlayUrl"></p>
+                        <p class="overlay-url" id="puzzleOverlayUrl"></p>
+                        <p class="overlay-url" id="playersOverlayUrl"></p>
+                    </div>
+
+                    <div class="setting-item">
+                        <span>Fond vert (Chroma Key)</span>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="chromaKeyToggle">
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+
+                    <button class="btn btn-warning w-100" id="changeHostBtn">
+                        Changer de présentateur
+                    </button>
+
+                    <button class="btn btn-danger w-100" id="stopGameBtn">
+                        🛑 Arrêter la partie immédiatement
+                    </button>
+
+                    <button class="btn btn-secondary w-100" id="newGameBtn">
+                        Nouvelle partie
+                    </button>
+
+                    <button class="btn btn-danger w-100" id="exitGameBtn">
+                        Quitter
+                    </button>
+                </div>
+            </div>
+
+            <!-- Chat (si activé) - Supprimé -->
+        </div>
+
+        <!-- Vue Joueur (affichage simplifié) -->
+        <div id="playerView" class="hidden">
+            
+            <!-- Notification de tour -->
+            <div id="playerTurnNotification" class="player-turn-notification hidden">
+                <div class="turn-notification-content">
+                    <span class="turn-icon">🎮</span>
+                    <span class="turn-text">C'EST À VOUS DE JOUER !</span>
+                    <span class="turn-icon">🎮</span>
+                </div>
+            </div>
+
+            <!-- Puzzle grande taille -->
+            <div class="player-puzzle-section">
+                <h2 id="playerPuzzleCategory" class="puzzle-category">CATÉGORIE</h2>
+                <div id="playerPuzzleGrid" class="puzzle-grid"></div>
+                
+                <!-- Buzzer pour proposer une solution -->
+                <div class="buzzer-section">
+                    <button id="buzzerBtn" class="buzzer-btn">
+                        🔔 BUZZER - Proposer la solution
+                    </button>
+                    <div id="buzzerProposal" class="buzzer-proposal hidden">
+                        <input type="text" id="buzzerInput" class="buzzer-input" placeholder="Tapez votre réponse...">
+                        <div class="buzzer-actions">
+                            <button id="buzzerSubmit" class="btn btn-success">Envoyer</button>
+                            <button id="buzzerCancel" class="btn btn-danger">Annuler</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Roue - Code overlay -->
+            <div class="wheel-container">
+                <div class="wheel-wrapper">
+                    <div class="wheel-pointer"></div>
+                    <div class="wheel" id="wheelElementPlayer">
+                        <!-- Les segments seront générés par JavaScript -->
+                    </div>
+                    <div class="wheel-center"></div>
+                </div>
+                <div class="wheel-result hidden" id="wheelResultPlayer"></div>
+            </div>
+            <div class="wheel-info" id="playerWheelResult">
+                <div>🎡 Résultat de la roue :</div>
+                <div class="wheel-value" id="playerWheelValue">-</div>
+            </div>
+
+            <!-- Scores des joueurs -->
+            <div class="player-scores-section">
+                <h3>🏆 Scores</h3>
+                <div id="playerScoresDisplay" class="scores-display"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de pause -->
+    <div id="pauseModal" class="modal hidden">
+        <div class="modal-content">
+            <h2>⏸️ PARTIE EN PAUSE</h2>
+            <p id="pauseMessage">Le présentateur est déconnecté...</p>
+            <p>Temps d'attente : <span id="pauseTimer">120</span> secondes</p>
+            <div class="progress-bar">
+                <div id="pauseProgress" class="progress-fill"></div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="js/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>La Roue de la Fortune M6 - Accueil</title>
+    <link rel="stylesheet" href="css/colors.css" />
+    <link rel="stylesheet" href="css/main.css" />
+    <link rel="stylesheet" href="css/components.css" />
+    <link rel="stylesheet" href="css/player-list.css" />
+</head>
+<body>
+    <header>
+        <h1>🎡 LA ROUE DE LA FORTUNE 🎡</h1>
+        <p>Basé sur le jeu télé d'Éric Antoine - M6</p>
+    </header>
+
+    <div class="container">
+        <div id="errorMessage" class="message hidden"></div>
+        <!-- Connexion à une partie -->
+        <div id="joinRoomScreen" class="card">
+            <h2 class="text-center">Rejoindre une partie</h2>
+
+            <form id="joinForm" onsubmit="return false;">
+                <div class="form-group">
+                    <label for="roomCode">Code de la partie :</label>
+                    <input type="password" id="roomCode" placeholder="Entrez le code à 6 caractères" maxlength="6" autocomplete="off" />
+                </div>
+
+                <div class="form-group">
+                    <label for="playerNameJoin">Votre nom :</label>
+                    <input type="text" id="playerNameJoin" placeholder="Entrez votre nom" autocomplete="off" />
+                </div>
+
+                <div class="form-group">
+                    <label for="playerRoleJoin">Votre rôle :</label>
+                    <select id="playerRoleJoin">
+                        <option value="player">Joueur</option>
+                        <option value="host">Présentateur / Gérant</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <button type="submit" class="btn btn-secondary w-100" id="joinRoomBtn">Rejoindre une partie</button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Création de nouvelle partie (en dessous) -->
+        <div id="createRoomScreen" class="card mt-30">
+            <h2 class="text-center">Créer une nouvelle partie</h2>
+
+            <div class="form-group">
+                <label for="playerNameCreate">Votre nom :</label>
+                <input type="text" id="playerNameCreate" placeholder="Entrez votre nom" autocomplete="off" />
+            </div>
+
+            <div class="form-group">
+                <div class="checkbox-wrapper">
+                    <input type="checkbox" id="persistBansCreate" class="styled-checkbox" checked />
+                    <label for="persistBansCreate" class="checkbox-label">Prendre en compte les comptes bannis enregistrés sur cet appareil</label>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <div class="checkbox-wrapper">
+                    <input type="checkbox" id="filterBannedCreate" class="styled-checkbox" checked />
+                    <label for="filterBannedCreate" class="checkbox-label">Activer le filtre de pseudos bannis</label>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <button class="btn btn-primary w-100" id="createRoomBtn">Créer une nouvelle partie</button>
+            </div>
+        </div>
+
+        <!-- Salle d'attente -->
+        <div id="lobbyScreen" class="card hidden">
+            <h2 class="text-center">Salle d'attente</h2>
+            <div class="message info text-center">
+                <div class="flex-center gap-10">
+                    <strong>Code de la partie : 
+                        <span id="displayRoomCode" class="room-code-hidden">******</span>
+                    </strong>
+                    <button class="btn btn-small" id="toggleCodeBtn">👁️ Afficher</button>
+                    <button class="btn btn-small" id="copyCodeBtn">📋 Copier</button>
+                </div>
+                <p class="mt-10">Partagez ce code avec vos amis !</p>
+            </div>
+            <!-- Affichage des paramètres de la room (en lecture seule) -->
+            <div id="roomSettings" class="card room-settings mt-10">
+                <div class="room-settings-header flex-between">
+                    <h4 class="mb-8">Paramètres</h4>
+                    <button id="toggleRoomSettings" class="btn btn-small">↕</button>
+                </div>
+                <div class="room-settings-body">
+                    <ul>
+                        <li>Comptes bannis : <strong id="displayPersistBans">—</strong></li>
+                        <li>Filtre de pseudos : <strong id="displayFilterPseudos">—</strong></li>
+                    </ul>
+                </div>
+            </div>
+            <h3>Joueurs connectés (<span id="playerCount">0</span>/4) :</h3>
+            <ul id="playersList" class="players-list"></ul>
+
+            <!-- (communication mode removed) -->
+
+            <div id="hostControls" class="hidden">
+                <p class="text-center mt-30 text-warning">Il faut au moins 2 joueurs pour commencer</p>
+                <button class="btn btn-primary w-100" id="startGameBtn">Lancer la partie</button>
+            </div>
+
+            <button class="btn btn-danger w-100 mt-15" id="leaveLobbyBtn">Quitter la partie</button>
+        </div>
+
+        <div id="settings" class="card mt-30">
+            <h2 class="text-center">Gérer les cookies</h2>
+            <p class="text-center">Gestion des cookies enregistrés sur cet appareil</p>
+
+            <div class="form-group mb-0" id="localBansSection">
+                <h4>Bannissements locaux</h4>
+                <p id="lobbyBanWarning" class="hidden warning-box">
+                    ⚠️ En partie, vous ne pouvez pas débannir de pseudos. Pour prendre en compte des changements, vous devez créer une nouvelle partie.
+                </p>
+                <div class="d-flex gap-10 mb-10 flex-align-center">
+                    <input type="text" id="banLocalInput" placeholder="Pseudo à bannir sur cet appareil" class="flex-1" />
+                    <button id="banLocalBtn" class="btn btn-danger">Bannir</button>
+                </div>
+                <div id="unbanLocalSection" class="d-flex gap-10 mt-10 flex-align-center">
+                    <input type="text" id="unbanLocalInput" placeholder="Pseudo à débannir sur cet appareil" class="flex-1" />
+                    <button id="unbanLocalBtn" class="btn">Débannir</button>
+                </div>
+                <ul id="localBannedList" class="players-list"></ul>
+                <button id="clearLocalBansBtn" class="btn btn-warning mt-20 w-100">Supprimer tous les cookies</button>
+                <div id="defaultBannedWordsSection" class="card mb-0 mt-20 card-transparent">
+                    <h4 class="mb-8">Mots bannis par défaut</h4>
+                    <div class="mb-8 fs-14 text-warning">
+                        <p class="mb-6">Cette liste ne peut pas être modifiée. Vous pouvez seulement activer ou désactiver le filtre lors de la création ou dans la salle d'attente.</p>
+                        <span class="text-danger fw-bold">⚠️ Si vous êtes streameur, ne montrez pas la liste suivante en stream !</span><br>
+                        <span class="text-info fs-13 fw-normal d-block mt-6">
+                            <strong>Note :</strong> Le filtre s'applique si <u>un mot ou motif est repéré dans le pseudo</u> (n'importe où dans le texte, pas besoin que le pseudo soit exactement le mot).<br>
+                            <strong>Majuscules/minuscules</strong> : aucune différence, tout est pris en compte.<br>
+                        </span>
+                    </div>
+                    <button id="toggleBannedWordsBtn" class="btn btn-secondary w-100">Afficher la liste</button>
+                    <div id="defaultBannedWordsListWrapper" class="hidden">
+                        <div class="mb-8 mt-10 d-flex gap-10 flex-align-center">
+                            <input type="text" id="bannedWordsSearch" placeholder="🔍 Rechercher (regex accepté)" class="flex-1" />
+                            <select id="bannedWordsSort">
+                                <option value="az">A-Z</option>
+                                <option value="za">Z-A</option>
+                                <option value="regexFirst">Regex d'abord</option>
+                                <option value="regexLast">Regex à la fin</option>
+                            </select>
+                            <div class="checkbox-wrapper">
+                                <input type="checkbox" id="bannedWordsShowRegex" class="styled-checkbox" checked />
+                                <label for="bannedWordsShowRegex" class="checkbox-label">Afficher les regex</label>
+                            </div>
+                        </div>
+                        <ul id="defaultBannedWordsList" class="mt-10 banned-words-list"></ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="reconnectModal" class="modal hidden">
+            <div class="modal-content">
+                <h2>⚠️ Reconnexion en cours...</h2>
+                <p>Vous avez été déconnecté de la partie.</p>
+                <p>Temps restant : <span id="reconnectTimer">120</span> secondes</p>
+                <div class="progress-bar">
+                    <div id="reconnectProgress" class="progress-fill"></div>
+                </div>
+                <button class="btn btn-primary" id="reconnectBtn">Rejoindre maintenant</button>
+            </div>
+        </div>
+
+        <!-- Modal de vote -->
+        <div id="voteModal" class="modal hidden">
+            <div class="modal-content">
+                <h2>🗳️ Vote des joueurs</h2>
+                <p id="voteMessage"></p>
+                <p>Temps restant : <span id="voteTimer">60</span> secondes</p>
+                <div class="vote-buttons">
+                    <button class="btn btn-success" id="voteYesBtn">✓ Oui</button>
+                    <button class="btn btn-danger" id="voteNoBtn">✗ Non</button>
+                </div>
+                <div id="voteResults" class="vote-results hidden">
+                    <p>Votes OUI : <span id="votesYes">0</span></p>
+                    <p>Votes NON : <span id="votesNo">0</span></p>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Modal de pause -->
+    <div id="pauseModal" class="modal hidden">
+        <div class="modal-content">
+            <h2>⚠️ Partie en pause</h2>
+            <p>Le présentateur s'est déconnecté.</p>
+            <p>Temps restant avant annulation : <span id="pauseTimer">120</span> secondes</p>
+            <div class="progress-bar">
+                <div id="pauseProgress" class="progress-fill"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de statut du jeu -->
+    <div id="gameStatus" class="game-status hidden">
+        <span class="status-text">PARTIE EN COURS</span>
+    </div>
+
+    <script type="module" src="js/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Puzzle Overlay - La Roue de la Fortune</title>
+    <link rel="stylesheet" href="css/colors.css">
+    <link rel="stylesheet" href="css/puzzle.css">
+    <script>
+        // Overlay public - vérifier uniquement que le code de room est fourni
+        const urlParams = new URLSearchParams(window.location.search);
+        const roomCode = urlParams.get('room');
+        
+        if (!roomCode) {
+            document.body.innerHTML = '';
+            document.body.style.background = 'white';
+        } else {
+            // Vérifier si la room existe dans le localStorage
+            const roomData = localStorage.getItem(`room_${roomCode}`);
+            if (!roomData) {
+                // La room n'existe pas ou a été supprimée - afficher une page blanche
+                document.body.innerHTML = '';
+                document.body.style.background = 'white';
+            }
+        }
+    </script>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: var(--color-background);
+        }
+    </style>
+</head>
+<body>
+    <div class="puzzle-container">
+        <div class="puzzle-category" id="puzzleCategory">CATÉGORIE</div>
+        <div class="puzzle-grid" id="puzzleGrid">
+            <!-- Les lettres seront générées par JavaScript -->
+        </div>
+    </div>
+
+    <script type="module" src="js/app.js"></script>
+</body>
+</html>
