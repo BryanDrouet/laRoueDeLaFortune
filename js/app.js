@@ -1720,10 +1720,13 @@ class RoueDeLaFortune {
             console.log('[DEBUG] updateDashboard - Nouveau wheelResult détecté:', roomData.wheelResult, '(ancien:', this[lastResultKey], ')');
             this[lastResultKey] = roomData.wheelResult;
             
-            const targetSegment = this.wheel.segments.find(seg => seg.value === roomData.wheelResult);
+            // Comparaison flexible pour gérer nombre vs string
+            const targetSegment = this.wheel.segments.find(seg => 
+                seg.value == roomData.wheelResult || String(seg.value) === String(roomData.wheelResult)
+            );
             if (targetSegment) {
                 const segmentIndex = this.wheel.segments.indexOf(targetSegment);
-                console.log('[DEBUG] updateDashboard - Segment trouvé à l\'index:', segmentIndex);
+                console.log('[DEBUG] updateDashboard - Segment trouvé à l\'index:', segmentIndex, 'valeur:', targetSegment.value);
                 
                 if (isHost) {
                     console.log('[DEBUG] updateDashboard - Animation roue host');
@@ -2070,10 +2073,16 @@ class RoueDeLaFortune {
         this[rotationProperty] += totalRotation;
         console.log('[DEBUG] animateDashboardWheel - Rotation totale:', this[rotationProperty]);
 
-        // Appliquer la rotation avec animation
+        // Forcer le navigateur à appliquer la transition avant le transform
+        // en utilisant requestAnimationFrame deux fois
         wheelElement.style.transition = 'transform 4s cubic-bezier(0.17, 0.67, 0.12, 0.99)';
-        wheelElement.style.transform = `rotate(${this[rotationProperty]}deg)`;
-        console.log('[DEBUG] animateDashboardWheel - Animation appliquée, transform:', wheelElement.style.transform);
+        
+        requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+                wheelElement.style.transform = `rotate(${this[rotationProperty]}deg)`;
+                console.log('[DEBUG] animateDashboardWheel - Animation appliquée, transform:', wheelElement.style.transform);
+            });
+        });
 
         // Afficher le résultat après l'animation et débloquer les animations futures
         setTimeout(() => {

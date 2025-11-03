@@ -46,10 +46,8 @@ export class GameEngine {
         const players = roomData.players.filter(p => p.role === 'player' && p.connected);
         if (players.length < 2) return false;
 
-        // Mélanger les segments de la roue pour la première manche
-        if (this.wheel && this.wheel.segments) {
-            this.wheel.segments = this.wheel.shuffleArray(this.wheel.segments);
-        }
+        // Ne pas mélanger les segments - toutes les roues doivent être identiques
+        // pour une synchronisation parfaite entre gérant, joueurs et overlay
 
         // Initialiser le jeu
         this.network.updateRoomState({
@@ -194,10 +192,7 @@ export class GameEngine {
         if (roomData.currentRound < (this.config?.game?.roundsPerGame || 5)) {
             updates.currentRound = roomData.currentRound + 1;
             
-            // Mélanger les segments de la roue pour la nouvelle manche
-            if (this.wheel && this.wheel.segments) {
-                this.wheel.segments = this.wheel.shuffleArray(this.wheel.segments);
-            }
+            // Ne pas mélanger les segments - toutes les roues doivent rester identiques
             
             updates.puzzle = this.getRandomPuzzle();
             updates.revealedLetters = [];
