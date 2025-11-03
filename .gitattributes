@@ -1,0 +1,5 @@
+# Ignore GitHub Secret Scanning pour les clés Firebase
+# Les clés API Firebase sont publiques par conception
+
+# Firebase API Keys
+js/firebase-config.js
