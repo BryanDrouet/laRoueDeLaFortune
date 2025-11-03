@@ -291,11 +291,17 @@ export class UIManager {
 
         roomData.chatMessages.slice(-50).forEach(msg => {
             const div = document.createElement('div');
-            div.className = 'chat-message';
-            div.innerHTML = `
-                <span class="chat-sender">${msg.sender}:</span>
-                <span>${msg.message}</span>
-            `;
+            div.className = msg.isSystemMessage ? 'chat-message system-message' : 'chat-message';
+            
+            if (msg.isSystemMessage) {
+                div.innerHTML = `<span class="chat-system">${msg.message}</span>`;
+            } else {
+                div.innerHTML = `
+                    <span class="chat-sender">${msg.sender}:</span>
+                    <span>${msg.message}</span>
+                `;
+            }
+            
             chatMessages.appendChild(div);
         });
 

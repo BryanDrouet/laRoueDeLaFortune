@@ -144,10 +144,25 @@ export class NetworkManager {
                 existingPlayer.lastHeartbeat = Date.now();
                 existingPlayer.disconnectedAt = null;
 
-                if (existingPlayer.role === 'host' && roomData.paused) {
-                    roomData.paused = false;
-                    roomData.pausedAt = null;
-                    roomData.pauseReason = null;
+                // Si c'est le host qui se reconnecte
+                if (existingPlayer.role === 'host') {
+                    // Enlever la pause
+                    if (roomData.paused) {
+                        roomData.paused = false;
+                        roomData.pausedAt = null;
+                        roomData.pauseReason = null;
+                    }
+                    
+                    // Ajouter un message de notification pour les joueurs
+                    if (!roomData.chatMessages) {
+                        roomData.chatMessages = [];
+                    }
+                    roomData.chatMessages.push({
+                        sender: 'SYSTÈME',
+                        message: `🔄 ${playerName} (Présentateur) s'est reconnecté`,
+                        timestamp: Date.now(),
+                        isSystemMessage: true
+                    });
                 }
 
                 await this.db.ref(`rooms/${code}`).update(roomData);
@@ -156,7 +171,7 @@ export class NetworkManager {
                 this.playerData = existingPlayer;
                 this.listenToRoom(code);
 
-                return { success: true, data: roomData, reconnected: true };
+                return { success: true, data: roomData, reconnected: true, isHost: existingPlayer.role === 'host' };
             } else {
                 return { success: false, error: 'Pseudo déjà utilisé dans la partie.' };
             }
@@ -246,11 +261,22 @@ export class NetworkManager {
             player.connected = false;
             player.disconnectedAt = Date.now();
             
-            // Si c'est le host, mettre en pause
+            // Si c'est le host, mettre en pause et notifier
             if (player.role === 'host' && roomData.state === 'playing') {
                 roomData.paused = true;
                 roomData.pausedAt = Date.now();
                 roomData.pauseReason = 'host_disconnected';
+                
+                // Ajouter un message de notification pour les joueurs
+                if (!roomData.chatMessages) {
+                    roomData.chatMessages = [];
+                }
+                roomData.chatMessages.push({
+                    sender: 'SYSTÈME',
+                    message: `⚠️ ${player.name} (Présentateur) a été déconnecté`,
+                    timestamp: Date.now(),
+                    isSystemMessage: true
+                });
             }
             
             roomData.lastUpdate = Date.now();

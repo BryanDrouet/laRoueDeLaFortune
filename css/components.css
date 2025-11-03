@@ -23,15 +23,32 @@ body[data-role="host"] .host-only {
     position: fixed;
     top: 20px;
     right: 20px;
-    padding: 10px 20px;
-    border-radius: 4px;
+    padding: 15px 25px;
+    border-radius: 8px;
     z-index: 1000;
+    font-size: 18px;
+    font-weight: bold;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+    animation: slideIn 0.5s ease-out;
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateX(400px);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
 }
 
 .game-status.playing {
     background-color: var(--color-success);
+    color: white;
 }
 
 .game-status.paused {
     background-color: var(--color-warning);
+    color: var(--color-text-dark);
 }

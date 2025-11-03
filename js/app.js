@@ -533,7 +533,11 @@ class RoueDeLaFortune {
             this.updateLobby(result.data);
 
             if (result.reconnected) {
-                this.ui.showMessage('errorMessage', 'Bienvenue de nouveau ! Votre reconnexion a été prise en compte.', 'success');
+                if (result.isHost) {
+                    this.ui.showMessage('errorMessage', '✅ Reconnexion réussie ! La partie reprend.', 'success');
+                } else {
+                    this.ui.showMessage('errorMessage', 'Bienvenue de nouveau ! Votre reconnexion a été prise en compte.', 'success');
+                }
             }
         } else {
             this.ui.showMessage('errorMessage', result.error, 'error');
@@ -1097,6 +1101,9 @@ class RoueDeLaFortune {
         
         // Restaurer le code de room dans le network manager
         this.network.roomCode = roomCode;
+        
+        // Commencer à écouter la room
+        this.network.listenToRoom(roomCode);
 
         // Vérifier si l'utilisateur est le host ou un joueur
         const isHost = this.network.isHost();
@@ -1123,11 +1130,17 @@ class RoueDeLaFortune {
             this.initPlayerDashboard();
         }
 
-        // Charger l'état initial
-        const roomData = this.network.getRoomData(roomCode);
-        if (roomData) {
-            this.updateDashboard(roomData);
-        }
+        // Attendre que les données initiales soient chargées avant de mettre à jour
+        const waitForData = () => {
+            const roomData = this.network.getRoomData(roomCode);
+            if (roomData) {
+                this.updateDashboard(roomData);
+            } else {
+                // Réessayer dans 100ms
+                setTimeout(waitForData, 100);
+            }
+        };
+        waitForData();
     }
 
     initHostDashboard() {
@@ -1273,6 +1286,7 @@ class RoueDeLaFortune {
         const roomData = this.network.getRoomData(this.network.getCurrentRoomCode());
         if (!roomData) {
             console.error('[DEBUG] spinWheel - roomData est null');
+            alert('Chargement en cours, veuillez patienter...');
             return;
         }
         console.log('[DEBUG] spinWheel - roomData OK', roomData);
@@ -1414,7 +1428,18 @@ class RoueDeLaFortune {
     }
 
     promptChangeHost() {
-        const roomData = this.network.getRoomData(this.network.getCurrentRoomCode());
+        const roomCode = this.network.getCurrentRoomCode();
+        if (!roomCode) {
+            alert('Code de room non disponible.');
+            return;
+        }
+        
+        const roomData = this.network.getRoomData(roomCode);
+        if (!roomData) {
+            alert('Chargement des données en cours, veuillez patienter...');
+            return;
+        }
+        
         const players = roomData.players.filter(p => p.role === 'player');
         
         if (players.length === 0) {
@@ -1482,9 +1507,15 @@ class RoueDeLaFortune {
     }
 
     promptHoldUp() {
-        const roomData = this.network.getRoomData(this.network.getCurrentRoomCode());
+        const roomCode = this.network.getCurrentRoomCode();
+        if (!roomCode) {
+            alert('Code de room non disponible.');
+            return;
+        }
+        
+        const roomData = this.network.getRoomData(roomCode);
         if (!roomData) {
-            alert('Données de la partie non disponibles.');
+            alert('Chargement des données en cours, veuillez patienter...');
             return;
         }
         
@@ -1499,9 +1530,15 @@ class RoueDeLaFortune {
     }
 
     promptSwap() {
-        const roomData = this.network.getRoomData(this.network.getCurrentRoomCode());
+        const roomCode = this.network.getCurrentRoomCode();
+        if (!roomCode) {
+            alert('Code de room non disponible.');
+            return;
+        }
+        
+        const roomData = this.network.getRoomData(roomCode);
         if (!roomData) {
-            alert('Données de la partie non disponibles.');
+            alert('Chargement des données en cours, veuillez patienter...');
             return;
         }
         
@@ -1516,9 +1553,15 @@ class RoueDeLaFortune {
     }
 
     promptDivide() {
-        const roomData = this.network.getRoomData(this.network.getCurrentRoomCode());
+        const roomCode = this.network.getCurrentRoomCode();
+        if (!roomCode) {
+            alert('Code de room non disponible.');
+            return;
+        }
+        
+        const roomData = this.network.getRoomData(roomCode);
         if (!roomData) {
-            alert('Données de la partie non disponibles.');
+            alert('Chargement des données en cours, veuillez patienter...');
             return;
         }
         
@@ -2111,6 +2154,11 @@ class RoueDeLaFortune {
             }
         }
 
+        // Afficher les notifications système pour les joueurs sur le dashboard
+        if (this.currentPage === 'dashboard' && currentPlayer && currentPlayer.role === 'player') {
+            this.checkSystemNotifications(roomData);
+        }
+
         switch (this.currentPage) {
             case 'index':
                 console.log('[DEBUG] handleRoomUpdate - Mise à jour page index');
@@ -2150,6 +2198,37 @@ class RoueDeLaFortune {
         // Les overlays (wheel, puzzle, players, game-overlay) ont le fond magenta quand activé
         if (roomData.settings && (this.currentPage === 'wheel' || this.currentPage === 'puzzle' || this.currentPage === 'players' || this.currentPage === 'game-overlay')) {
             this.ui.toggleChromaKey(roomData.settings.chromaKey || false);
+        }
+    }
+
+    checkSystemNotifications(roomData) {
+        if (!roomData.chatMessages || roomData.chatMessages.length === 0) return;
+
+        // Récupérer le dernier message système non affiché
+        const lastMessage = roomData.chatMessages[roomData.chatMessages.length - 1];
+        
+        if (lastMessage.isSystemMessage && lastMessage.timestamp !== this.lastSystemMessageTimestamp) {
+            this.lastSystemMessageTimestamp = lastMessage.timestamp;
+            
+            // Afficher une notification visuelle temporaire
+            const gameStatus = document.getElementById('gameStatus');
+            if (gameStatus) {
+                gameStatus.textContent = lastMessage.message;
+                gameStatus.className = 'game-status';
+                
+                // Déterminer le style selon le type de message
+                if (lastMessage.message.includes('déconnecté')) {
+                    gameStatus.classList.add('paused');
+                } else if (lastMessage.message.includes('reconnecté')) {
+                    gameStatus.classList.add('playing');
+                }
+                
+                // Masquer après 5 secondes
+                setTimeout(() => {
+                    gameStatus.textContent = '';
+                    gameStatus.className = 'game-status';
+                }, 5000);
+            }
         }
     }
 
