@@ -13,6 +13,7 @@ export class NetworkManager {
         this.reconnectTimeout = null;
         this.db = null;
         this.roomRef = null;
+        this.cachedRoomData = null; // Cache pour accès synchrone
         this.init();
     }
 
@@ -43,6 +44,7 @@ export class NetworkManager {
         this.roomRef = this.db.ref(`rooms/${roomCode}`);
         this.roomRef.on('value', (snapshot) => {
             const roomData = snapshot.val();
+            this.cachedRoomData = roomData; // Mettre à jour le cache
             this.notifyUpdate(roomData);
         });
     }
@@ -394,8 +396,18 @@ export class NetworkManager {
         // Utilisé pour compatibilité - Firebase update en temps réel
     }
 
-    // Récupérer les données d'une room
-    async getRoomData(code) {
+    // Récupérer les données d'une room (version synchrone avec cache)
+    getRoomData(code) {
+        // Si on demande la room actuelle, utiliser le cache
+        if (code === this.roomCode && this.cachedRoomData) {
+            return this.cachedRoomData;
+        }
+        // Sinon, retourner null (les données seront chargées par listenToRoom)
+        return null;
+    }
+
+    // Récupérer les données d'une room (version asynchrone pour chargement initial)
+    async getRoomDataAsync(code) {
         const snapshot = await this.db.ref(`rooms/${code}`).once('value');
         return snapshot.val();
     }

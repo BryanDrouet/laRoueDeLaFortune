@@ -12,7 +12,7 @@
 export const firebaseConfig = {
   apiKey: "AIzaSyBO3kpAvL9vdjoyI8nEvL8bYHWW1Y4Kl8Y",
   authDomain: "roue-fortune-multiplayer.firebaseapp.com",
-  databaseURL: "https://roue-fortune-multiplayer-default-rtdb.firebaseio.com",
+  databaseURL: "https://roue-fortune-multiplayer-default-rtdb.europe-west1.firebasedatabase.app",
   projectId: "roue-fortune-multiplayer",
   storageBucket: "roue-fortune-multiplayer.firebasestorage.app",
   messagingSenderId: "196445702550",

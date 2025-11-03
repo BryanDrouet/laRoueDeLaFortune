@@ -426,7 +426,7 @@ class RoueDeLaFortune {
         }
 
         // Vérifier la room (besoin des settings pour appliquer les filtres)
-        const roomData = await this.network.getRoomData(roomCode);
+        const roomData = await this.network.getRoomDataAsync(roomCode);
         if (!roomData) {
             this.ui.showMessage('errorMessage', 'Partie inexistante avec ce code.', 'error');
             return;
@@ -499,7 +499,7 @@ class RoueDeLaFortune {
             return;
         }
 
-        const result = this.network.joinRoom(roomCode, playerName, playerRole);
+        const result = await this.network.joinRoom(roomCode, playerName, playerRole);
         if (result.success) {
             document.getElementById('displayRoomCode').textContent = '******';
             this.ui.hide('joinRoomScreen');
@@ -950,7 +950,7 @@ class RoueDeLaFortune {
 
     }
 
-    createRoom() {
+    async createRoom() {
         const playerName = document.getElementById('playerNameCreate')?.value.trim();
         const nameRegex = /^[a-zA-Z0-9 À-ÿ'.-]{1,20}$/u;
 
@@ -970,12 +970,17 @@ class RoueDeLaFortune {
             return;
         }
 
-        const roomData = this.network.getRoomData(this.network.getCurrentRoomCode());
-        if (roomData && roomData.players.some(p => p.name.toLowerCase() === playerName.toLowerCase())) {
-            this.ui.showMessage('errorMessage', 'Ce pseudo est déjà utilisé dans la partie', 'error'); 
-            return;
+        // Vérifier si on est déjà dans une room (éviter la double vérification)
+        const currentRoomCode = this.network.getCurrentRoomCode();
+        if (currentRoomCode) {
+            const roomData = await this.network.getRoomDataAsync(currentRoomCode);
+            if (roomData && roomData.players.some(p => p.name.toLowerCase() === playerName.toLowerCase())) {
+                this.ui.showMessage('errorMessage', 'Ce pseudo est déjà utilisé dans la partie', 'error'); 
+                return;
+            }
         }
-        const result = this.network.createRoom(playerName, 'host');
+        
+        const result = await this.network.createRoom(playerName, 'host');
         if (!result.success) {
             this.ui.showMessage('errorMessage', 'Erreur lors de la création de la partie', 'error');
             return;
@@ -1015,13 +1020,20 @@ class RoueDeLaFortune {
         // Appliquer la valeur par défaut de persistance des bannis sélectionnée lors de la création
         try {
             const persistCheckbox = document.getElementById('persistBansCreate');
-            if (persistCheckbox) {
+            if (persistCheckbox && result.data) {
                 const persist = !!persistCheckbox.checked;
                 // Lire aussi le paramètre de filtre de pseudos
                 const filterCheckbox = document.getElementById('filterBannedCreate');
                 const filterFlag = !!(filterCheckbox ? filterCheckbox.checked : true);
                 // Mettre à jour les settings de la room fraîchement créée
-                this.network.updateRoomState({ settings: { ...(this.network.getRoomData(this.network.getCurrentRoomCode()).settings || {}), persistBans: persist, filterBannedUsernames: filterFlag } });
+                const currentSettings = result.data.settings || {};
+                this.network.updateRoomState({ 
+                    settings: { 
+                        ...currentSettings, 
+                        persistBans: persist, 
+                        filterBannedUsernames: filterFlag 
+                    } 
+                });
             }
         } catch (e) {
             console.error('Impossible de définir persistBans à la création :', e);
