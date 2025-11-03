@@ -1344,22 +1344,30 @@ class RoueDeLaFortune {
 
         // Mettre à jour le résultat dans roomData - cela déclenchera l'animation pour les AUTRES
         // (dashboard joueurs et overlay) via handleRoomUpdate()
+        // Stocker la valeur ET le type pour pouvoir traiter les cas spéciaux
         console.log('[DEBUG] spinWheel - Mise à jour wheelResult dans Firebase');
-        this.network.updateRoomState({ wheelResult: selectedSegment.value });
+        this.network.updateRoomState({ 
+            wheelResult: selectedSegment.value,
+            wheelResultType: selectedSegment.type,
+            wheelResultEffect: selectedSegment.effect
+        });
 
         // Attendre la fin de l'animation (4 secondes) avant d'activer les boutons
         setTimeout(() => {
             console.log('[DEBUG] spinWheel - Fin de l\'animation, activation des boutons');
+            console.log('[DEBUG] spinWheel - Segment type:', selectedSegment.type, 'value:', selectedSegment.value);
             // L'affichage du résultat est déjà géré par animateDashboardWheel
             
             if (spinBtn) spinBtn.disabled = false;
 
             // Si c'est de l'argent, l'ajouter immédiatement à la cagnotte du joueur actuel
             if (selectedSegment.type === 'money') {
+                console.log('[DEBUG] spinWheel - Type MONEY détecté, valeur:', selectedSegment.value);
                 const currentRoomData = this.network.getRoomData(this.network.getCurrentRoomCode());
                 if (currentRoomData) {
                     const currentPlayer = this.game.getCurrentPlayer(currentRoomData);
                     if (currentPlayer && currentPlayer.connected) {
+                        console.log('[DEBUG] spinWheel - Ajout de', selectedSegment.value, 'au joueur', currentPlayer.name);
                         // Ajouter l'argent temporairement (sera multiplié par le nombre de lettres lors de la validation)
                         currentPlayer.wheelValue = selectedSegment.value;
                         this.network.updateRoomState({ players: currentRoomData.players });
@@ -1372,6 +1380,7 @@ class RoueDeLaFortune {
                 document.getElementById('solvePuzzleBtn').disabled = false;
             } else {
                 // Cas spécial
+                console.log('[DEBUG] spinWheel - Type SPECIAL détecté:', selectedSegment.effect);
                 this.handleSpecialCase(selectedSegment);
             }
         }, 4000);
@@ -1452,6 +1461,9 @@ class RoueDeLaFortune {
     }
 
     handleSpecialCase(result) {
+        const roomData = this.network.getRoomData(this.network.getCurrentRoomCode());
+        const currentPlayer = this.game.getCurrentPlayer(roomData);
+        
         switch (result.effect) {
             case 'lose_round_money':
                 // Banqueroute automatique
@@ -1459,12 +1471,46 @@ class RoueDeLaFortune {
                 this.ui.showMessage('gameStatus', 'BANQUEROUTE ! Le joueur perd sa cagnotte du tour.', 'error');
                 setTimeout(() => this.game.nextPlayer(), 2000);
                 break;
+                
             case 'lose_turn':
+                // Passe ton tour
                 this.game.nextPlayer();
                 this.ui.showMessage('gameStatus', 'PASSE TON TOUR ! On passe au joueur suivant.', 'warning');
                 break;
+                
+            case 'steal_money':
+                // HOLD UP - Voler l'argent d'un autre joueur
+                this.ui.showMessage('gameStatus', 'HOLD UP ! Le gérant doit choisir qui voler.', 'info');
+                document.getElementById('nextPlayerBtn').disabled = false;
+                break;
+                
+            case 'swap_money':
+                // ÉCHANGE - Échanger sa cagnotte avec un autre joueur
+                this.ui.showMessage('gameStatus', 'ÉCHANGE ! Le gérant doit choisir avec qui échanger.', 'info');
+                document.getElementById('nextPlayerBtn').disabled = false;
+                break;
+                
+            case 'divide_opponent':
+                // DIVISEUR - Diviser la cagnotte d'un adversaire par 2
+                this.ui.showMessage('gameStatus', 'DIVISEUR ! Le gérant doit choisir qui diviser.', 'info');
+                document.getElementById('nextPlayerBtn').disabled = false;
+                break;
+                
+            case 'mini_wheel':
+                // MINI-ROUE - Faire tourner une mini roue avec des gains spéciaux
+                this.ui.showMessage('gameStatus', 'MINI-ROUE ! Fonctionnalité à implémenter.', 'info');
+                document.getElementById('nextPlayerBtn').disabled = false;
+                break;
+                
+            case 'prize_grab':
+                // CAVERNE - Choisir un prix caché
+                this.ui.showMessage('gameStatus', 'CAVERNE ! Fonctionnalité à implémenter.', 'info');
+                document.getElementById('nextPlayerBtn').disabled = false;
+                break;
+                
             default:
                 this.ui.showMessage('gameStatus', `Cas spécial : ${result.value}`, 'info');
+                document.getElementById('nextPlayerBtn').disabled = false;
         }
     }
 

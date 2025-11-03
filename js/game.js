@@ -111,11 +111,12 @@ export class GameEngine {
             };
             
             // Ajouter les gains multipliés par le nombre de lettres
-            if (roomData.wheelResult && typeof roomData.wheelResult === 'number') {
+            const wheelValue = parseInt(roomData.wheelResult);
+            if (roomData.wheelResult && !isNaN(wheelValue)) {
                 const currentPlayer = this.getCurrentPlayer(roomData);
                 if (currentPlayer && currentPlayer.connected) {
                     // Ajouter l'argent multiplié par le nombre de lettres trouvées
-                    currentPlayer.roundMoney += roomData.wheelResult * count;
+                    currentPlayer.roundMoney += wheelValue * count;
                     updates.players = roomData.players;
                 }
             }
