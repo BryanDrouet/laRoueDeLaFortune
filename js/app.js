@@ -1723,10 +1723,10 @@ class RoueDeLaFortune {
                 
                 if (isHost) {
                     console.log('[DEBUG] updateDashboard - Animation roue host');
-                    this.animateDashboardWheel('wheelElement', 'wheelResult', segmentIndex, roomData.wheelResult, 'wheelRotation');
+                    this.animateDashboardWheel('wheelElement', 'wheelValue', segmentIndex, roomData.wheelResult, 'wheelRotation');
                 } else {
                     console.log('[DEBUG] updateDashboard - Animation roue joueur');
-                    this.animateDashboardWheel('wheelElementPlayer', 'wheelResultPlayer', segmentIndex, roomData.wheelResult, 'wheelRotationPlayer');
+                    this.animateDashboardWheel('wheelElementPlayer', 'playerWheelValue', segmentIndex, roomData.wheelResult, 'wheelRotationPlayer');
                 }
             } else {
                 console.error('[DEBUG] updateDashboard - Segment non trouvé pour:', roomData.wheelResult);
@@ -2017,6 +2017,7 @@ class RoueDeLaFortune {
 
     animateDashboardWheel(wheelElementId, resultElementId, segmentIndex, resultValue, rotationProperty) {
         console.log('[DEBUG] animateDashboardWheel - Début:', wheelElementId, 'segment:', segmentIndex, 'valeur:', resultValue);
+        console.log('[DEBUG] animateDashboardWheel - rotationProperty:', rotationProperty, 'valeur actuelle:', this[rotationProperty]);
         const wheelElement = document.getElementById(wheelElementId);
         const resultElement = document.getElementById(resultElementId);
         
@@ -2025,6 +2026,12 @@ class RoueDeLaFortune {
             return;
         }
         console.log('[DEBUG] animateDashboardWheel - wheelElement trouvé');
+        
+        // Initialiser la propriété de rotation si elle n'existe pas
+        if (this[rotationProperty] === undefined) {
+            this[rotationProperty] = 0;
+            console.log('[DEBUG] animateDashboardWheel - rotationProperty initialisée à 0');
+        }
 
         // Nombre de segments
         const numSegments = this.wheel.segments.length;
@@ -2052,21 +2059,14 @@ class RoueDeLaFortune {
         // Appliquer la rotation avec animation
         wheelElement.style.transition = 'transform 4s cubic-bezier(0.17, 0.67, 0.12, 0.99)';
         wheelElement.style.transform = `rotate(${this[rotationProperty]}deg)`;
-        console.log('[DEBUG] animateDashboardWheel - Animation appliquée');
+        console.log('[DEBUG] animateDashboardWheel - Animation appliquée, transform:', wheelElement.style.transform);
 
-        // Afficher le résultat après l'animation avec effet pop
+        // Afficher le résultat après l'animation
         setTimeout(() => {
             console.log('[DEBUG] animateDashboardWheel - Affichage du résultat après 4s');
             if (resultElement) {
                 resultElement.textContent = resultValue;
                 resultElement.classList.remove('hidden');
-                resultElement.style.animation = 'resultPop 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55)';
-                
-                // Masquer le résultat après 3 secondes
-                setTimeout(() => {
-                    resultElement.style.animation = '';
-                    resultElement.classList.add('hidden');
-                }, 3000);
             }
         }, 4000);
     }
