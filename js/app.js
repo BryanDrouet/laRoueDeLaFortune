@@ -1149,6 +1149,18 @@ class RoueDeLaFortune {
         this.wheelRotation = 0;
         this.lastWheelResult = null;
         console.log('[DEBUG] initHostDashboard - wheelRotation et lastWheelResult initialisés');
+        
+        // Initialiser le lastWheelResult depuis Firebase pour éviter de re-animer
+        const roomCode = sessionStorage.getItem('currentRoomCode');
+        if (roomCode) {
+            firebase.database().ref(`rooms/${roomCode}`).once('value', (snapshot) => {
+                const roomData = snapshot.val();
+                if (roomData && roomData.wheelResult) {
+                    this.lastWheelResult = roomData.wheelResult;
+                    console.log('[DEBUG] initHostDashboard - lastWheelResult initialisé:', this.lastWheelResult);
+                }
+            });
+        }
 
         // Créer la roue dans le dashboard (vérifier que les segments sont chargés)
         const createWheelWhenReady = () => {
@@ -1269,6 +1281,18 @@ class RoueDeLaFortune {
         this.wheelRotationPlayer = 0;
         this.lastWheelResultPlayer = null;
         
+        // Initialiser le lastWheelResultPlayer depuis Firebase pour éviter de re-animer
+        const roomCode = sessionStorage.getItem('currentRoomCode');
+        if (roomCode) {
+            firebase.database().ref(`rooms/${roomCode}`).once('value', (snapshot) => {
+                const roomData = snapshot.val();
+                if (roomData && roomData.wheelResult) {
+                    this.lastWheelResultPlayer = roomData.wheelResult;
+                    console.log('[DEBUG] initPlayerDashboard - lastWheelResultPlayer initialisé:', this.lastWheelResultPlayer);
+                }
+            });
+        }
+        
         // Créer la roue dans le dashboard joueur (vérifier que les segments sont chargés)
         const createWheelWhenReady = () => {
             if (this.wheel.segments && this.wheel.segments.length > 0) {
@@ -1286,7 +1310,6 @@ class RoueDeLaFortune {
         const roomData = this.network.getRoomData(this.network.getCurrentRoomCode());
         if (!roomData) {
             console.error('[DEBUG] spinWheel - roomData est null');
-            alert('Chargement en cours, veuillez patienter...');
             return;
         }
         console.log('[DEBUG] spinWheel - roomData OK', roomData);
@@ -1309,7 +1332,10 @@ class RoueDeLaFortune {
         // Choisir un segment aléatoire
         const randomIndex = Math.floor(Math.random() * this.wheel.segments.length);
         const selectedSegment = this.wheel.segments[randomIndex];
-        console.log('[DEBUG] spinWheel - Segment sélectionné:', selectedSegment);
+        console.log('[DEBUG] spinWheel - Index:', randomIndex, 'Segment sélectionné:', selectedSegment);
+
+        // Mettre à jour lastWheelResult pour éviter la réanimation
+        this.lastWheelResult = selectedSegment.value;
 
         // Mettre à jour le résultat dans roomData - cela déclenchera l'animation de TOUTES les roues
         // (dashboard gérant, dashboard joueurs, et overlay) via handleRoomUpdate()
@@ -1675,9 +1701,11 @@ class RoueDeLaFortune {
         }
         
         // Animer la roue si le résultat change (même logique que l'overlay)
-        if (roomData.wheelResult && roomData.wheelResult !== this.lastWheelResult) {
-            console.log('[DEBUG] updateDashboard - Nouveau wheelResult détecté:', roomData.wheelResult, '(ancien:', this.lastWheelResult, ')');
-            this.lastWheelResult = roomData.wheelResult;
+        // Utiliser une variable différente selon le rôle (host ou joueur)
+        const lastResultKey = isHost ? 'lastWheelResult' : 'lastWheelResultPlayer';
+        if (roomData.wheelResult && roomData.wheelResult !== this[lastResultKey]) {
+            console.log('[DEBUG] updateDashboard - Nouveau wheelResult détecté:', roomData.wheelResult, '(ancien:', this[lastResultKey], ')');
+            this[lastResultKey] = roomData.wheelResult;
             
             const targetSegment = this.wheel.segments.find(seg => seg.value === roomData.wheelResult);
             if (targetSegment) {
@@ -2210,11 +2238,16 @@ class RoueDeLaFortune {
 
         // Rediriger automatiquement vers le dashboard quand la partie démarre
         if (this.currentPage === 'index' && roomData.state === 'playing' && currentPlayer) {
+            console.log('[DEBUG] handleRoomUpdate - Partie commencée, redirection vers dashboard');
             const roomCode = this.network.getCurrentRoomCode();
             if (roomCode && currentPlayer) {
                 sessionStorage.setItem('currentRoomCode', roomCode);
                 sessionStorage.setItem('currentPlayerData', JSON.stringify(currentPlayer));
-                window.location.href = 'dashboard.html?room=' + encodeURIComponent(roomCode);
+                console.log('[DEBUG] handleRoomUpdate - Redirection vers dashboard.html');
+                // Attendre un court instant pour s'assurer que Firebase est synchronisé
+                setTimeout(() => {
+                    window.location.href = 'dashboard.html?room=' + encodeURIComponent(roomCode);
+                }, 300);
                 return;
             }
         }
