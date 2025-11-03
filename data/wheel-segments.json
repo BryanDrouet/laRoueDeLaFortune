@@ -17,9 +17,6 @@
     {"id": 15, "value": "BANQUEROUTE", "type": "special", "color": "#000000", "effect": "lose_round_money"},
     {"id": 16, "value": "PASSE TON TOUR", "type": "special", "color": "#FFFFFF", "effect": "lose_turn"},
     {"id": 17, "value": "HOLD UP", "type": "special", "color": "#FF4444", "effect": "steal_money"},
-    {"id": 18, "value": "ÉCHANGE", "type": "special", "color": "#4CAF50", "effect": "swap_money"},
-    {"id": 19, "value": "DIVISEUR", "type": "special", "color": "#2196F3", "effect": "divide_opponent"},
-    {"id": 20, "value": "MINI-ROUE", "type": "special", "color": "#FF9800", "effect": "mini_wheel"},
-    {"id": 21, "value": "CAVERNE", "type": "special", "color": "#9C27B0", "effect": "prize_grab"}
+    {"id": 18, "value": "ÉCHANGE", "type": "special", "color": "#4CAF50", "effect": "swap_money"}
   ]
 }

@@ -1494,24 +1494,6 @@ class RoueDeLaFortune {
                 document.getElementById('nextPlayerBtn').disabled = false;
                 break;
                 
-            case 'divide_opponent':
-                // DIVISEUR - Diviser la cagnotte d'un adversaire par 2
-                this.ui.showMessage('gameStatus', 'DIVISEUR ! Le gérant doit choisir qui diviser.', 'info');
-                document.getElementById('nextPlayerBtn').disabled = false;
-                break;
-                
-            case 'mini_wheel':
-                // MINI-ROUE - Faire tourner une mini roue avec des gains spéciaux
-                this.ui.showMessage('gameStatus', 'MINI-ROUE ! Fonctionnalité à implémenter.', 'info');
-                document.getElementById('nextPlayerBtn').disabled = false;
-                break;
-                
-            case 'prize_grab':
-                // CAVERNE - Choisir un prix caché
-                this.ui.showMessage('gameStatus', 'CAVERNE ! Fonctionnalité à implémenter.', 'info');
-                document.getElementById('nextPlayerBtn').disabled = false;
-                break;
-                
             default:
                 this.ui.showMessage('gameStatus', `Cas spécial : ${result.value}`, 'info');
                 document.getElementById('nextPlayerBtn').disabled = false;
@@ -1640,29 +1622,6 @@ class RoueDeLaFortune {
         
         if (choice !== null) {
             this.game.swapMoney(parseInt(choice));
-        }
-    }
-
-    promptDivide() {
-        const roomCode = this.network.getCurrentRoomCode();
-        if (!roomCode) {
-            alert('Code de room non disponible.');
-            return;
-        }
-        
-        const roomData = this.network.getRoomData(roomCode);
-        if (!roomData) {
-            alert('Chargement des données en cours, veuillez patienter...');
-            return;
-        }
-        
-        const players = roomData.players.filter(p => p.role === 'player');
-        
-        const choice = prompt(`DIVISEUR ! Choisissez un joueur (0-${players.length - 1}) :\n` +
-            players.map((p, i) => `${i}: ${p.name}`).join('\n'));
-        
-        if (choice !== null) {
-            this.game.divideOpponent(parseInt(choice));
         }
     }
 
@@ -1802,6 +1761,13 @@ class RoueDeLaFortune {
         const playerNameElement = document.getElementById('currentPlayerName');
         if (playerNameElement && currentPlayer) {
             playerNameElement.textContent = currentPlayer.name;
+            
+            // Détecter si le joueur a changé pour réinitialiser les boutons
+            if (isHost && this.lastPlayerIndex !== roomData.currentPlayerIndex) {
+                console.log('[DEBUG] updateDashboard - Changement de joueur détecté:', this.lastPlayerIndex, '->', roomData.currentPlayerIndex);
+                this.lastPlayerIndex = roomData.currentPlayerIndex;
+                this.resetButtonsForNewTurn();
+            }
         }
 
         // Joueurs
@@ -2506,6 +2472,25 @@ class RoueDeLaFortune {
                 gameStatus.classList.add('playing');
             }
         }
+    }
+
+    resetButtonsForNewTurn() {
+        // Réactiver le bouton de la roue
+        const spinBtn = document.getElementById('spinWheelBtn');
+        if (spinBtn) spinBtn.disabled = false;
+        
+        // Désactiver les autres boutons
+        const validateBtn = document.getElementById('validateLetterBtn');
+        const buyVowelBtn = document.getElementById('buyvowelBtn');
+        const solveBtn = document.getElementById('solvePuzzleBtn');
+        const nextBtn = document.getElementById('nextPlayerBtn');
+        
+        if (validateBtn) validateBtn.disabled = true;
+        if (buyVowelBtn) buyVowelBtn.disabled = true;
+        if (solveBtn) solveBtn.disabled = true;
+        if (nextBtn) nextBtn.disabled = true;
+        
+        console.log('[DEBUG] resetButtonsForNewTurn - Boutons réinitialisés');
     }
 }
 
