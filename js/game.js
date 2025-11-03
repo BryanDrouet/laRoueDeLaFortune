@@ -106,15 +106,17 @@ export class GameEngine {
                 newRevealedLetters.push(letter);
             }
 
-            // Calculer les gains
+            // Calculer les gains - l'argent de base a déjà été ajouté lors du spin
             const updates = {
                 usedLetters: newUsedLetters,
                 revealedLetters: newRevealedLetters
             };
             
+            // Ajouter les gains multipliés par le nombre de lettres
             if (roomData.wheelResult && typeof roomData.wheelResult === 'number') {
                 const currentPlayer = this.getCurrentPlayer(roomData);
                 if (currentPlayer && currentPlayer.connected) {
+                    // Ajouter l'argent multiplié par le nombre de lettres trouvées
                     currentPlayer.roundMoney += roomData.wheelResult * count;
                     updates.players = roomData.players;
                 }
@@ -123,8 +125,12 @@ export class GameEngine {
             this.network.updateRoomState(updates);
             return { success: true, count: count, keepPlaying: true };
         } else {
-            // Lettre non trouvée - mettre à jour les lettres utilisées puis passer au joueur suivant
-            this.network.updateRoomState({ usedLetters: newUsedLetters });
+            // Lettre non trouvée - réinitialiser wheelValue et passer au joueur suivant
+            const currentPlayer = this.getCurrentPlayer(roomData);
+            if (currentPlayer && currentPlayer.wheelValue) {
+                currentPlayer.wheelValue = 0;
+            }
+            this.network.updateRoomState({ usedLetters: newUsedLetters, players: roomData.players });
             this.nextPlayer();
             return { success: false, count: 0, reason: 'not_found' };
         }

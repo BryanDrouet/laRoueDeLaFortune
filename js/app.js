@@ -1324,8 +1324,19 @@ class RoueDeLaFortune {
             
             if (spinBtn) spinBtn.disabled = false;
 
-            // Activer les boutons appropriés
+            // Si c'est de l'argent, l'ajouter immédiatement à la cagnotte du joueur actuel
             if (selectedSegment.type === 'money') {
+                const currentRoomData = this.network.getRoomData(this.network.getCurrentRoomCode());
+                if (currentRoomData) {
+                    const currentPlayer = this.game.getCurrentPlayer(currentRoomData);
+                    if (currentPlayer && currentPlayer.connected) {
+                        // Ajouter l'argent temporairement (sera multiplié par le nombre de lettres lors de la validation)
+                        currentPlayer.wheelValue = selectedSegment.value;
+                        this.network.updateRoomState({ players: currentRoomData.players });
+                    }
+                }
+                
+                // Activer les boutons appropriés
                 document.getElementById('validateLetterBtn').disabled = false;
                 document.getElementById('buyvowelBtn').disabled = false;
                 document.getElementById('solvePuzzleBtn').disabled = false;
@@ -1840,6 +1851,7 @@ class RoueDeLaFortune {
     // ==============================
     initWheelOverlay() {
         this.wheelRotation = 0; // Tracker la rotation actuelle de la roue
+        this.wheelInitialized = false; // Flag pour savoir si c'est le premier chargement
         
         // Créer la roue quand les segments sont prêts
         const createWheelWhenReady = () => {
@@ -1858,13 +1870,23 @@ class RoueDeLaFortune {
         if (roomCode) {
             this.network.roomCode = roomCode;
             
-            // Initialiser lastWheelResult avec la valeur actuelle pour éviter l'animation au chargement
-            const roomData = this.network.getRoomData(roomCode);
-            this.lastWheelResult = roomData?.wheelResult || null;
-            this.lastRound = roomData?.currentRound || 1;
+            // Attendre que les données soient chargées pour initialiser lastWheelResult
+            const waitForInitialData = () => {
+                const roomData = this.network.getRoomData(roomCode);
+                if (roomData) {
+                    // Initialiser avec la valeur actuelle pour éviter l'animation au chargement
+                    this.lastWheelResult = roomData.wheelResult || null;
+                    this.lastRound = roomData.currentRound || 1;
+                    this.wheelInitialized = true;
+                } else {
+                    setTimeout(waitForInitialData, 100);
+                }
+            };
+            waitForInitialData();
         } else {
             this.lastWheelResult = null;
             this.lastRound = 1;
+            this.wheelInitialized = true;
         }
     }
 
@@ -1875,6 +1897,9 @@ class RoueDeLaFortune {
             document.body.style.background = 'white';
             return;
         }
+        
+        // Attendre que l'initialisation soit terminée
+        if (!this.wheelInitialized) return;
         
         // Vérifier si la manche a changé pour recréer la roue avec les nouveaux segments
         if (roomData.currentRound !== this.lastRound) {
@@ -1892,7 +1917,7 @@ class RoueDeLaFortune {
             this.wheel.createWheel('wheelElement'); // Recréer la roue avec les segments mélangés
         }
         
-        // Détecter si le résultat de la roue a changé
+        // Détecter si le résultat de la roue a changé (seulement après l'initialisation)
         if (roomData.wheelResult && roomData.wheelResult !== this.lastWheelResult) {
             this.lastWheelResult = roomData.wheelResult;
             
@@ -1913,18 +1938,27 @@ class RoueDeLaFortune {
         
         if (!wheelElement) return;
 
-        // Calculer l'angle de rotation pour atteindre le segment
-        const segmentAngle = 360 / this.wheel.segments.length;
-        const targetAngle = segmentIndex * segmentAngle;
+        // Nombre de segments
+        const numSegments = this.wheel.segments.length;
+        const segmentAngle = 360 / numSegments;
         
-        // Nombre minimum de tours complets (au moins 5 tours)
-        const minSpins = 5;
+        // L'angle du centre du segment (le premier segment commence à 0°)
+        const segmentCenterAngle = segmentIndex * segmentAngle + (segmentAngle / 2);
         
-        // Calculer la rotation totale en tournant toujours dans le sens horaire
-        const additionalRotation = (360 * minSpins) + targetAngle;
-        this.wheelRotation += additionalRotation;
+        // La flèche pointe vers le haut (0°), donc on doit faire tourner la roue
+        // pour amener le centre du segment sous la flèche
+        // On inverse la rotation car la roue tourne dans le sens horaire
+        const targetAngle = 360 - segmentCenterAngle;
+        
+        // Nombre de tours complets (au moins 3 tours complets = 1080°)
+        const minSpins = 3;
+        const fullRotations = 360 * minSpins;
+        
+        // Calculer la rotation totale : tours complets + angle pour atteindre le segment
+        const totalRotation = fullRotations + targetAngle;
+        this.wheelRotation += totalRotation;
 
-        // Appliquer la rotation avec animation (toujours dans le sens horaire, positif)
+        // Appliquer la rotation avec animation
         wheelElement.style.transition = 'transform 4s cubic-bezier(0.17, 0.67, 0.12, 0.99)';
         wheelElement.style.transform = `rotate(${this.wheelRotation}deg)`;
 
@@ -1955,17 +1989,27 @@ class RoueDeLaFortune {
         }
         console.log('[DEBUG] animateDashboardWheel - wheelElement trouvé');
 
-        // Calculer l'angle de rotation pour atteindre le segment
-        const segmentAngle = 360 / this.wheel.segments.length;
-        const targetAngle = segmentIndex * segmentAngle;
-        console.log('[DEBUG] animateDashboardWheel - segmentAngle:', segmentAngle, 'targetAngle:', targetAngle);
+        // Nombre de segments
+        const numSegments = this.wheel.segments.length;
+        const segmentAngle = 360 / numSegments;
         
-        // Nombre minimum de tours complets (au moins 5 tours)
-        const minSpins = 5;
+        // L'angle du centre du segment (le premier segment commence à 0°)
+        const segmentCenterAngle = segmentIndex * segmentAngle + (segmentAngle / 2);
         
-        // Calculer la rotation totale en tournant toujours dans le sens horaire
-        const additionalRotation = (360 * minSpins) + targetAngle;
-        this[rotationProperty] += additionalRotation;
+        // La flèche pointe vers le haut (0°), donc on doit faire tourner la roue
+        // pour amener le centre du segment sous la flèche
+        // On inverse la rotation car la roue tourne dans le sens horaire
+        const targetAngle = 360 - segmentCenterAngle;
+        
+        console.log('[DEBUG] animateDashboardWheel - segmentAngle:', segmentAngle, 'segmentCenterAngle:', segmentCenterAngle, 'targetAngle:', targetAngle);
+        
+        // Nombre de tours complets (au moins 3 tours complets = 1080°)
+        const minSpins = 3;
+        const fullRotations = 360 * minSpins;
+        
+        // Calculer la rotation totale : tours complets + angle pour atteindre le segment
+        const totalRotation = fullRotations + targetAngle;
+        this[rotationProperty] += totalRotation;
         console.log('[DEBUG] animateDashboardWheel - Rotation totale:', this[rotationProperty]);
 
         // Appliquer la rotation avec animation
@@ -2027,8 +2071,7 @@ class RoueDeLaFortune {
         
         // Initialiser la roue
         this.wheelRotation = 0;
-        this.lastWheelResult = null;
-        this.lastRound = 1;
+        this.wheelInitialized = false;
         
         const createWheelWhenReady = () => {
             if (this.wheel.segments && this.wheel.segments.length > 0) {
@@ -2038,6 +2081,25 @@ class RoueDeLaFortune {
             }
         };
         createWheelWhenReady();
+        
+        // Attendre que les données soient chargées pour initialiser lastWheelResult
+        if (roomCode) {
+            const waitForInitialData = () => {
+                const roomData = this.network.getRoomData(roomCode);
+                if (roomData) {
+                    this.lastWheelResult = roomData.wheelResult || null;
+                    this.lastRound = roomData.currentRound || 1;
+                    this.wheelInitialized = true;
+                } else {
+                    setTimeout(waitForInitialData, 100);
+                }
+            };
+            waitForInitialData();
+        } else {
+            this.lastWheelResult = null;
+            this.lastRound = 1;
+            this.wheelInitialized = true;
+        }
     }
 
     updateGameOverlay(roomData) {
@@ -2046,6 +2108,9 @@ class RoueDeLaFortune {
             document.body.style.background = 'white';
             return;
         }
+        
+        // Attendre que l'initialisation soit terminée
+        if (!this.wheelInitialized) return;
         
         // Manche
         const roundElement = document.getElementById('currentRound');
@@ -2175,6 +2240,7 @@ class RoueDeLaFortune {
             case 'puzzle':
                 console.log('[DEBUG] handleRoomUpdate - Mise à jour puzzle overlay');
                 this.ui.createPuzzleGrid(roomData);
+                this.ui.createLetterKeyboard(roomData);
                 // Si roomData est null, la room a été supprimée
                 if (!roomData) {
                     document.body.innerHTML = '';
