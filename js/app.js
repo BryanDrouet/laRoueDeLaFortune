@@ -426,7 +426,7 @@ class RoueDeLaFortune {
         }
 
         // Vérifier la room (besoin des settings pour appliquer les filtres)
-        const roomData = this.network.getRoomData(roomCode);
+        const roomData = await this.network.getRoomData(roomCode);
         if (!roomData) {
             this.ui.showMessage('errorMessage', 'Partie inexistante avec ce code.', 'error');
             return;

@@ -1,6 +1,8 @@
 // ====================================
-// NETWORKING.JS - Gestion des rooms et synchronisation
+// NETWORKING.JS - Gestion des rooms et synchronisation (Firebase)
 // ====================================
+
+import { firebaseConfig } from './firebase-config.js';
 
 export class NetworkManager {
     constructor() {
@@ -9,29 +11,17 @@ export class NetworkManager {
         this.updateCallbacks = [];
         this.heartbeatInterval = null;
         this.reconnectTimeout = null;
+        this.db = null;
+        this.roomRef = null;
         this.init();
     }
 
-    init() {
-        // Écouter les changements dans localStorage
-        window.addEventListener('storage', (e) => {
-            if (e.key && e.key.startsWith('room_')) {
-                this.handleRoomUpdate(e.key, e.newValue);
-            }
-        });
-
-        // Polling pour les changements locaux (même onglet)
-        setInterval(() => {
-            if (this.roomCode) {
-                const roomData = this.getRoomData(this.roomCode);
-                // Si la room n'existe plus, notifier avec null
-                if (!roomData) {
-                    this.notifyUpdate(null);
-                } else {
-                    this.notifyUpdate(roomData);
-                }
-            }
-        }, 500);
+    async init() {
+        // Initialiser Firebase
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
+        this.db = firebase.database();
 
         // Détecter la fermeture de la page
         window.addEventListener('beforeunload', () => {
@@ -42,6 +32,29 @@ export class NetworkManager {
 
         // Heartbeat pour maintenir la connexion
         this.startHeartbeat();
+    }
+
+    // Écouter les changements d'une room
+    listenToRoom(roomCode) {
+        if (this.roomRef) {
+            this.roomRef.off(); // Arrêter l'ancienne écoute
+        }
+
+        this.roomRef = this.db.ref(`rooms/${roomCode}`);
+        this.roomRef.on('value', (snapshot) => {
+            const roomData = snapshot.val();
+            this.notifyUpdate(roomData);
+        });
+    }
+
+    // Générer un code de room aléatoire
+    generateRoomCode() {
+        const characters = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+        let code = '';
+        for (let i = 0; i < 6; i++) {
+            code += characters.charAt(Math.floor(Math.random() * characters.length));
+        }
+        return code;
     }
 
     // Générer un code de room aléatoire
@@ -55,32 +68,40 @@ export class NetworkManager {
     }
 
     // Créer une nouvelle room
-    createRoom(hostName, role) {
+    async createRoom(hostName, role) {
         const code = this.generateRoomCode();
+        
+        // Vérifier que le code n'existe pas déjà
+        const snapshot = await this.db.ref(`rooms/${code}`).once('value');
+        if (snapshot.exists()) {
+            // Code existe déjà, réessayer
+            return this.createRoom(hostName, role);
+        }
+
+        const newPlayer = {
+            name: hostName,
+            role: role,
+            id: this.generatePlayerId(),
+            roundMoney: 0,
+            totalMoney: 0,
+            connected: true,
+            lastHeartbeat: Date.now(),
+            disconnectedAt: null
+        };
+
         const roomData = {
             code: code,
             host: hostName,
-            players: [{
-                name: hostName,
-                role: role,
-                id: this.generatePlayerId(),
-                roundMoney: 0,
-                totalMoney: 0,
-                connected: true,
-                lastHeartbeat: Date.now(),
-                disconnectedAt: null
-            }],
+            players: [newPlayer],
             state: 'lobby',
             currentRound: 0,
             currentPlayerIndex: 0,
-            // Liste des pseudos bannis (stockés en minuscules)
             bannedPlayers: [],
             settings: {
                 streamerMode: false,
-                chromaKey: false
-                ,
-                // Si true, conserver la liste des comptes bannis après la fin/dissolution de la partie
-                persistBans: false
+                chromaKey: false,
+                persistBans: false,
+                filterBannedUsernames: true
             },
             puzzle: null,
             revealedLetters: [],
@@ -91,17 +112,22 @@ export class NetworkManager {
             pausedAt: null,
             pauseReason: null,
             vote: null,
-            createdAt: Date.now()
+            createdAt: Date.now(),
+            lastUpdate: Date.now()
         };
 
-        this.saveRoomData(code, roomData);
+        await this.db.ref(`rooms/${code}`).set(roomData);
+        
         this.roomCode = code;
-        this.playerData = roomData.players[0];
+        this.playerData = newPlayer;
+        this.listenToRoom(code);
+
         return { success: true, code: code, data: roomData };
     }
 
-    joinRoom(code, playerName, role) {
-        const roomData = this.getRoomData(code);
+    async joinRoom(code, playerName, role) {
+        const snapshot = await this.db.ref(`rooms/${code}`).once('value');
+        const roomData = snapshot.val();
         
         if (!roomData) {
             return { success: false, error: 'Code de partie invalide' };
@@ -111,24 +137,25 @@ export class NetworkManager {
         const existingPlayer = roomData.players.find(p => p.name.toLowerCase() === playerName.toLowerCase());
         if (existingPlayer) {
             if (!existingPlayer.connected) {
-                // Cas reconnexion, on reconnecte
+                // Cas reconnexion
                 existingPlayer.connected = true;
                 existingPlayer.lastHeartbeat = Date.now();
                 existingPlayer.disconnectedAt = null;
-                this.saveRoomData(code, roomData);
-                this.roomCode = code;
-                this.playerData = existingPlayer;
 
                 if (existingPlayer.role === 'host' && roomData.paused) {
                     roomData.paused = false;
                     roomData.pausedAt = null;
                     roomData.pauseReason = null;
-                    this.saveRoomData(code, roomData);
                 }
+
+                await this.db.ref(`rooms/${code}`).update(roomData);
+                
+                this.roomCode = code;
+                this.playerData = existingPlayer;
+                this.listenToRoom(code);
 
                 return { success: true, data: roomData, reconnected: true };
             } else {
-                // Déjà connecté sous ce pseudo, erreur
                 return { success: false, error: 'Pseudo déjà utilisé dans la partie.' };
             }
         }
@@ -157,35 +184,45 @@ export class NetworkManager {
         };
 
         roomData.players.push(newPlayer);
-        this.saveRoomData(code, roomData);
+        roomData.lastUpdate = Date.now();
+        
+        await this.db.ref(`rooms/${code}`).update(roomData);
+        
         this.roomCode = code;
         this.playerData = newPlayer;
+        this.listenToRoom(code);
 
         return { success: true, data: roomData };
     }
     // Quitter une room
-    leaveRoom() {
+    async leaveRoom() {
         if (!this.roomCode || !this.playerData) return;
 
-        const roomData = this.getRoomData(this.roomCode);
+        const snapshot = await this.db.ref(`rooms/${this.roomCode}`).once('value');
+        const roomData = snapshot.val();
+        
         if (!roomData) return;
 
-        // Retirer le joueur complètement
+        // Retirer le joueur
         roomData.players = roomData.players.filter(p => p.id !== this.playerData.id);
 
         if (roomData.players.length === 0) {
             // Supprimer la room si vide
-            localStorage.removeItem(`room_${this.roomCode}`);
+            await this.db.ref(`rooms/${this.roomCode}`).remove();
         } else {
             // Si le host part, promouvoir un autre joueur
-            if (this.playerData.role === 'host') {
-                const newHost = roomData.players.find(p => p.role === 'host') || roomData.players[0];
-                if (newHost) {
-                    newHost.role = 'host';
-                    roomData.host = newHost.name;
-                }
+            const hasHost = roomData.players.some(p => p.role === 'host');
+            if (!hasHost && roomData.players.length > 0) {
+                roomData.players[0].role = 'host';
+                roomData.host = roomData.players[0].name;
             }
-            this.saveRoomData(this.roomCode, roomData);
+            
+            roomData.lastUpdate = Date.now();
+            await this.db.ref(`rooms/${this.roomCode}`).update(roomData);
+        }
+
+        if (this.roomRef) {
+            this.roomRef.off();
         }
 
         this.stopHeartbeat();
@@ -194,10 +231,12 @@ export class NetworkManager {
     }
 
     // Marquer un joueur comme déconnecté (sans le retirer)
-    markPlayerDisconnected() {
+    async markPlayerDisconnected() {
         if (!this.roomCode || !this.playerData) return;
 
-        const roomData = this.getRoomData(this.roomCode);
+        const snapshot = await this.db.ref(`rooms/${this.roomCode}`).once('value');
+        const roomData = snapshot.val();
+        
         if (!roomData) return;
 
         const player = roomData.players.find(p => p.id === this.playerData.id);
@@ -212,73 +251,64 @@ export class NetworkManager {
                 roomData.pauseReason = 'host_disconnected';
             }
             
-            this.saveRoomData(this.roomCode, roomData);
+            roomData.lastUpdate = Date.now();
+            await this.db.ref(`rooms/${this.roomCode}`).update(roomData);
         }
     }
 
     // Exclure un joueur (uniquement pour le host)
-    kickPlayer(playerId) {
+    async kickPlayer(playerId) {
         if (!this.roomCode || !this.isHost()) return false;
 
-        const roomData = this.getRoomData(this.roomCode);
+        const snapshot = await this.db.ref(`rooms/${this.roomCode}`).once('value');
+        const roomData = snapshot.val();
+        
         if (!roomData) return false;
 
         // Ne pas pouvoir s'exclure soi-même
         if (playerId === this.playerData.id) return false;
 
         roomData.players = roomData.players.filter(p => p.id !== playerId);
-        this.saveRoomData(this.roomCode, roomData);
+        roomData.lastUpdate = Date.now();
+        
+        await this.db.ref(`rooms/${this.roomCode}`).update(roomData);
+        
         return true;
     }
 
     // Vérifier les joueurs déconnectés et les supprimer après timeout
     checkDisconnectedPlayers() {
-        if (!this.roomCode) return;
-
-        const roomData = this.getRoomData(this.roomCode);
-        if (!roomData) return;
-
-        const now = Date.now();
-        const DISCONNECT_TIMEOUT = 120000; // 2 minutes
-
-        let playersRemoved = false;
-
-        roomData.players.forEach((player, index) => {
-            if (!player.connected && player.disconnectedAt) {
-                const disconnectedTime = now - player.disconnectedAt;
-                
-                if (disconnectedTime > DISCONNECT_TIMEOUT) {
-                    // Supprimer le joueur après 2 minutes
-                    roomData.players.splice(index, 1);
-                    playersRemoved = true;
-                }
-            }
-        });
-
-        if (playersRemoved) {
-            this.saveRoomData(this.roomCode, roomData);
-        }
+        // Plus nécessaire - le serveur gère cela automatiquement
     }
 
     // Heartbeat pour maintenir la connexion
     startHeartbeat() {
-        this.heartbeatInterval = setInterval(() => {
+        this.heartbeatInterval = setInterval(async () => {
             if (this.roomCode && this.playerData) {
-                const roomData = this.getRoomData(this.roomCode);
+                const snapshot = await this.db.ref(`rooms/${this.roomCode}`).once('value');
+                const roomData = snapshot.val();
+                
                 if (roomData) {
                     const player = roomData.players.find(p => p.id === this.playerData.id);
                     if (player) {
                         player.lastHeartbeat = Date.now();
                         player.connected = true;
-                        this.saveRoomData(this.roomCode, roomData);
                     }
+                    
+                    // Nettoyer les joueurs déconnectés depuis plus de 2 minutes
+                    const now = Date.now();
+                    const DISCONNECT_TIMEOUT = 120000;
+                    
+                    roomData.players = roomData.players.filter(p => {
+                        if (!p.connected && p.disconnectedAt) {
+                            return (now - p.disconnectedAt) <= DISCONNECT_TIMEOUT;
+                        }
+                        return true;
+                    });
+                    
+                    roomData.lastUpdate = Date.now();
+                    await this.db.ref(`rooms/${this.roomCode}`).update(roomData);
                 }
-                
-                // Vérifier les joueurs déconnectés
-                this.checkDisconnectedPlayers();
-                
-                // Vérifier les votes en pause
-                this.checkPauseVotes();
             }
         }, 5000); // Toutes les 5 secondes
     }
@@ -292,88 +322,52 @@ export class NetworkManager {
 
     // Vérifier les votes en pause
     checkPauseVotes() {
-        if (!this.roomCode) return;
-
-        const roomData = this.getRoomData(this.roomCode);
-        if (!roomData || !roomData.paused || !roomData.pausedAt) return;
-
-        const now = Date.now();
-        const pausedTime = now - roomData.pausedAt;
-        const FIRST_VOTE_TIME = 120000; // 2 minutes
-        const REVOTE_TIME = 60000; // 1 minute
-
-        // Si le host est reconnecté, annuler la pause
-        const host = roomData.players.find(p => p.role === 'host');
-        if (host && host.connected) {
-            roomData.paused = false;
-            roomData.pausedAt = null;
-            roomData.pauseReason = null;
-            roomData.vote = null;
-            this.saveRoomData(this.roomCode, roomData);
-            return;
-        }
-
-        // Lancer le premier vote après 2 minutes
-        if (pausedTime > FIRST_VOTE_TIME && !roomData.vote) {
-            this.startVote('Le présentateur est absent depuis 2 minutes. Voulez-vous arrêter la partie ?');
-        }
-        
-        // Relancer un vote toutes les minutes après le premier
-        if (roomData.vote && roomData.vote.endedAt) {
-            const timeSinceLastVote = now - roomData.vote.endedAt;
-            if (timeSinceLastVote > REVOTE_TIME && !roomData.vote.active) {
-                this.startVote('Le présentateur est toujours absent. Voulez-vous arrêter la partie ?');
-            }
-        }
+        // Plus nécessaire - le serveur peut gérer cela si besoin
     }
 
     // Démarrer un vote
     startVote(question) {
         if (!this.roomCode) return;
 
-        const roomData = this.getRoomData(this.roomCode);
-        if (!roomData) return;
-
-        roomData.vote = {
-            active: true,
-            question: question,
-            startedAt: Date.now(),
-            duration: 60000, // 1 minute
-            votes: {},
-            endedAt: null,
-            result: null
-        };
-
-        this.saveRoomData(this.roomCode, roomData);
+        this.updateRoomState({
+            vote: {
+                active: true,
+                question: question,
+                startedAt: Date.now(),
+                duration: 60000,
+                votes: {},
+                endedAt: null,
+                result: null
+            }
+        });
     }
 
     // Voter
     castVote(playerId, vote) {
         if (!this.roomCode) return false;
 
-        const roomData = this.getRoomData(this.roomCode);
-        if (!roomData || !roomData.vote || !roomData.vote.active) return false;
+        this.getRoomData(this.roomCode).then(roomData => {
+            if (!roomData || !roomData.vote || !roomData.vote.active) return false;
 
-        roomData.vote.votes[playerId] = vote;
-        this.saveRoomData(this.roomCode, roomData);
-        
-        // Vérifier si tous les joueurs ont voté
-        const players = roomData.players.filter(p => p.role === 'player' && p.connected);
-        const votedCount = Object.keys(roomData.vote.votes).length;
-        
-        if (votedCount >= players.length) {
-            this.endVote();
-        }
+            roomData.vote.votes[playerId] = vote;
+            
+            // Vérifier si tous les joueurs ont voté
+            const players = roomData.players.filter(p => p.role === 'player' && p.connected);
+            const votedCount = Object.keys(roomData.vote.votes).length;
+            
+            if (votedCount >= players.length) {
+                this.endVote(roomData);
+            } else {
+                this.updateRoomState({ vote: roomData.vote });
+            }
+        });
         
         return true;
     }
 
     // Terminer un vote
-    endVote() {
-        if (!this.roomCode) return;
-
-        const roomData = this.getRoomData(this.roomCode);
-        if (!roomData || !roomData.vote) return;
+    endVote(roomData) {
+        if (!this.roomCode || !roomData) return;
 
         const votes = roomData.vote.votes;
         const yesVotes = Object.values(votes).filter(v => v === 'yes').length;
@@ -383,50 +377,48 @@ export class NetworkManager {
         roomData.vote.endedAt = Date.now();
         roomData.vote.result = yesVotes > noVotes ? 'yes' : 'no';
 
+        const updates = { vote: roomData.vote };
+
         if (roomData.vote.result === 'yes') {
             // Arrêter la partie
-            roomData.state = 'finished';
-            roomData.paused = false;
-            roomData.pauseReason = 'vote_stopped';
+            updates.state = 'finished';
+            updates.paused = false;
+            updates.pauseReason = 'vote_stopped';
         }
 
-        this.saveRoomData(this.roomCode, roomData);
+        this.updateRoomState(updates);
     }
 
     // Sauvegarder les données d'une room
     saveRoomData(code, data) {
-        data.lastUpdate = Date.now();
-        localStorage.setItem(`room_${code}`, JSON.stringify(data));
+        // Utilisé pour compatibilité - Firebase update en temps réel
     }
 
     // Récupérer les données d'une room
-    getRoomData(code) {
-        const data = localStorage.getItem(`room_${code}`);
-        return data ? JSON.parse(data) : null;
+    async getRoomData(code) {
+        const snapshot = await this.db.ref(`rooms/${code}`).once('value');
+        return snapshot.val();
     }
 
     // Mettre à jour l'état de la room
-    updateRoomState(updates) {
+    async updateRoomState(updates) {
         if (!this.roomCode) return false;
 
-        const roomData = this.getRoomData(this.roomCode);
+        const snapshot = await this.db.ref(`rooms/${this.roomCode}`).once('value');
+        const roomData = snapshot.val();
+        
         if (!roomData) return false;
 
         Object.assign(roomData, updates);
+        roomData.lastUpdate = Date.now();
 
-        // Si la partie est terminée (state === 'finished') et que l'option de persistance des bans
-        // n'est pas activée, on réinitialise la liste des bannis pour permettre à tout le monde
-        // de revenir pour une nouvelle partie.
-        try {
-            if (roomData.state === 'finished' && !(roomData.settings && roomData.settings.persistBans)) {
-                roomData.bannedPlayers = [];
-            }
-        } catch (e) {
-            // ignore
+        // Gérer la fin de partie et les bannis
+        if (roomData.state === 'finished' && !(roomData.settings && roomData.settings.persistBans)) {
+            roomData.bannedPlayers = [];
         }
 
-        this.saveRoomData(this.roomCode, roomData);
-        this.notifyUpdate(roomData);
+        await this.db.ref(`rooms/${this.roomCode}`).update(roomData);
+        
         return true;
     }
 
@@ -445,27 +437,21 @@ export class NetworkManager {
         this.updateCallbacks.forEach(callback => callback(roomData));
     }
 
-    // Gérer les mises à jour de room
-    handleRoomUpdate(key, newValue) {
-        if (!this.roomCode) return;
-        if (key !== `room_${this.roomCode}`) return;
-
-        // Si newValue est null, la room a été supprimée
-        if (!newValue) {
-            this.notifyUpdate(null);
-            return;
-        }
-
-        const roomData = JSON.parse(newValue);
-        this.notifyUpdate(roomData);
-    }
+    // Plus besoin de handleRoomUpdate avec Socket.IO
+    // Le serveur envoie directement les mises à jour via roomUpdate
 
     // Envoyer un message dans le chat
-    sendChatMessage(message) {
+    async sendChatMessage(message) {
         if (!this.roomCode || !this.playerData) return false;
 
-        const roomData = this.getRoomData(this.roomCode);
+        const snapshot = await this.db.ref(`rooms/${this.roomCode}`).once('value');
+        const roomData = snapshot.val();
+        
         if (!roomData) return false;
+
+        if (!roomData.chatMessages) {
+            roomData.chatMessages = [];
+        }
 
         roomData.chatMessages.push({
             sender: this.playerData.name,
@@ -473,7 +459,9 @@ export class NetworkManager {
             timestamp: Date.now()
         });
 
-        this.saveRoomData(this.roomCode, roomData);
+        roomData.lastUpdate = Date.now();
+        await this.db.ref(`rooms/${this.roomCode}`).update(roomData);
+        
         return true;
     }
 
