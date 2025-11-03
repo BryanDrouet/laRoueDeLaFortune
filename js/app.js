@@ -14,6 +14,7 @@ class RoueDeLaFortune {
         if (path.includes('wheel-overlay.html')) return 'wheel';
         if (path.includes('puzzle-overlay.html')) return 'puzzle';
         if (path.includes('players-overlay.html')) return 'players';
+        if (path.includes('game-overlay.html')) return 'game-overlay';
         return 'index';
     }
     constructor() {
@@ -60,6 +61,9 @@ class RoueDeLaFortune {
                 break;
             case 'players':
                 this.initPlayersOverlay();
+                break;
+            case 'game-overlay':
+                this.initGameOverlay();
                 break;
         }
 
@@ -1127,15 +1131,19 @@ class RoueDeLaFortune {
     }
 
     initHostDashboard() {
+        console.log('[DEBUG] initHostDashboard - Début');
         // Initialiser le système de rotation pour l'overlay
         this.wheelRotation = 0;
         this.lastWheelResult = null;
+        console.log('[DEBUG] initHostDashboard - wheelRotation et lastWheelResult initialisés');
 
         // Créer la roue dans le dashboard (vérifier que les segments sont chargés)
         const createWheelWhenReady = () => {
             if (this.wheel.segments && this.wheel.segments.length > 0) {
+                console.log('[DEBUG] initHostDashboard - Création de la roue avec', this.wheel.segments.length, 'segments');
                 this.wheel.createWheel('wheelElement');
             } else {
+                console.log('[DEBUG] initHostDashboard - Segments pas encore chargés, réessai dans 100ms');
                 // Réessayer après un court délai
                 setTimeout(createWheelWhenReady, 100);
             }
@@ -1185,10 +1193,16 @@ class RoueDeLaFortune {
         });
 
         document.getElementById('chromaKeyToggle')?.addEventListener('change', (e) => {
+            // Mettre à jour le state pour synchroniser avec les overlays
+            // Le chroma key s'applique UNIQUEMENT aux overlays, pas au dashboard
             const roomCode = this.network.getCurrentRoomCode();
             const roomData = this.network.getRoomData(roomCode);
+            if (!roomData) return; // Attendre que les données soient chargées
+            
+            const currentSettings = roomData.settings || {};
+            
             this.network.updateRoomState({ 
-                settings: { ...roomData.settings, chromaKey: e.target.checked }
+                settings: { ...currentSettings, chromaKey: e.target.checked }
             });
         });
 
@@ -1209,6 +1223,11 @@ class RoueDeLaFortune {
                 this.selectedLetter = e.target.dataset.letter;
                 document.querySelectorAll('.letter-key').forEach(btn => btn.classList.remove('selected'));
                 e.target.classList.add('selected');
+                // Afficher la lettre sélectionnée
+                const selectedLetterValue = document.getElementById('selectedLetterValue');
+                if (selectedLetterValue) {
+                    selectedLetterValue.textContent = this.selectedLetter;
+                }
             }
         });
 
@@ -1222,6 +1241,11 @@ class RoueDeLaFortune {
                     this.selectedLetter = letter;
                     document.querySelectorAll('.letter-key').forEach(btn => btn.classList.remove('selected'));
                     letterBtn.classList.add('selected');
+                    // Afficher la lettre sélectionnée
+                    const selectedLetterValue = document.getElementById('selectedLetterValue');
+                    if (selectedLetterValue) {
+                        selectedLetterValue.textContent = this.selectedLetter;
+                    }
                 }
             }
         });
@@ -1245,28 +1269,43 @@ class RoueDeLaFortune {
     }
 
     spinWheel() {
+        console.log('[DEBUG] spinWheel - Début');
         const roomData = this.network.getRoomData(this.network.getCurrentRoomCode());
-        if (!roomData) return;
+        if (!roomData) {
+            console.error('[DEBUG] spinWheel - roomData est null');
+            return;
+        }
+        console.log('[DEBUG] spinWheel - roomData OK', roomData);
 
         // Vérifier que les segments sont chargés
         if (!this.wheel.segments || this.wheel.segments.length === 0) {
+            console.error('[DEBUG] spinWheel - Segments pas chargés');
             alert('La roue est en cours de chargement, veuillez patienter...');
             return;
         }
+        console.log('[DEBUG] spinWheel - Segments OK:', this.wheel.segments.length);
 
         // Désactiver le bouton pendant le tour
         const spinBtn = document.getElementById('spinWheelBtn');
-        if (spinBtn) spinBtn.disabled = true;
+        if (spinBtn) {
+            console.log('[DEBUG] spinWheel - Désactivation du bouton');
+            spinBtn.disabled = true;
+        }
 
         // Choisir un segment aléatoire
         const randomIndex = Math.floor(Math.random() * this.wheel.segments.length);
         const selectedSegment = this.wheel.segments[randomIndex];
+        console.log('[DEBUG] spinWheel - Segment sélectionné:', selectedSegment);
 
-        // Mettre à jour le résultat dans roomData (l'overlay fera l'animation)
+        // Mettre à jour le résultat dans roomData - cela déclenchera l'animation de TOUTES les roues
+        // (dashboard gérant, dashboard joueurs, et overlay) via handleRoomUpdate()
+        console.log('[DEBUG] spinWheel - Mise à jour wheelResult dans Firebase');
         this.network.updateRoomState({ wheelResult: selectedSegment.value });
 
-        // Afficher le résultat après 4 secondes (durée de l'animation dans l'overlay)
+        // Attendre la fin de l'animation (4 secondes) avant d'activer les boutons
         setTimeout(() => {
+            console.log('[DEBUG] spinWheel - Fin de l\'animation, affichage du résultat');
+            // Afficher le résultat dans l'UI du gérant
             this.ui.displayWheelResult(selectedSegment);
             
             if (spinBtn) spinBtn.disabled = false;
@@ -1302,7 +1341,14 @@ class RoueDeLaFortune {
             }
         }
 
+        // Réinitialiser la sélection
         this.selectedLetter = null;
+        const selectedLetterValue = document.getElementById('selectedLetterValue');
+        if (selectedLetterValue) {
+            selectedLetterValue.textContent = '-';
+        }
+        // Retirer la classe 'selected' de toutes les lettres
+        document.querySelectorAll('.letter-key').forEach(btn => btn.classList.remove('selected'));
     }
 
     buyVowel() {
@@ -1437,6 +1483,11 @@ class RoueDeLaFortune {
 
     promptHoldUp() {
         const roomData = this.network.getRoomData(this.network.getCurrentRoomCode());
+        if (!roomData) {
+            alert('Données de la partie non disponibles.');
+            return;
+        }
+        
         const players = roomData.players.filter(p => p.role === 'player');
         
         const choice = prompt(`HOLD UP ! Choisissez un joueur (0-${players.length - 1}) :\n` +
@@ -1449,6 +1500,11 @@ class RoueDeLaFortune {
 
     promptSwap() {
         const roomData = this.network.getRoomData(this.network.getCurrentRoomCode());
+        if (!roomData) {
+            alert('Données de la partie non disponibles.');
+            return;
+        }
+        
         const players = roomData.players.filter(p => p.role === 'player');
         
         const choice = prompt(`ÉCHANGE ! Choisissez un joueur (0-${players.length - 1}) :\n` +
@@ -1461,6 +1517,11 @@ class RoueDeLaFortune {
 
     promptDivide() {
         const roomData = this.network.getRoomData(this.network.getCurrentRoomCode());
+        if (!roomData) {
+            alert('Données de la partie non disponibles.');
+            return;
+        }
+        
         const players = roomData.players.filter(p => p.role === 'player');
         
         const choice = prompt(`DIVISEUR ! Choisissez un joueur (0-${players.length - 1}) :\n` +
@@ -1472,13 +1533,30 @@ class RoueDeLaFortune {
     }
 
     toggleStreamerMode(enabled) {
+        console.log('[DEBUG] toggleStreamerMode - Début, enabled:', enabled);
         const roomCode = this.network.getCurrentRoomCode();
+        const roomData = this.network.getRoomData(roomCode);
+        if (!roomData) {
+            console.warn('[DEBUG] toggleStreamerMode - roomData null, réessai dans 100ms');
+            // Réessayer après un court délai
+            setTimeout(() => this.toggleStreamerMode(enabled), 100);
+            return;
+        }
+        console.log('[DEBUG] toggleStreamerMode - roomData OK');
+        
+        // S'assurer que settings existe
+        const currentSettings = roomData.settings || {};
+        console.log('[DEBUG] toggleStreamerMode - currentSettings:', currentSettings);
+        
         this.network.updateRoomState({
-            settings: { ...this.network.getRoomData(roomCode).settings, streamerMode: enabled }
+            settings: { ...currentSettings, streamerMode: enabled }
         });
+        console.log('[DEBUG] toggleStreamerMode - État mis à jour dans Firebase');
 
         if (enabled) {
             const baseUrl = window.location.origin + window.location.pathname.replace('dashboard.html', '');
+            console.log('[DEBUG] toggleStreamerMode - Affichage des URLs, baseUrl:', baseUrl);
+            document.getElementById('gameOverlayUrl').textContent = baseUrl + 'game-overlay.html?room=' + encodeURIComponent(roomCode);
             document.getElementById('wheelOverlayUrl').textContent = baseUrl + 'wheel-overlay.html?room=' + encodeURIComponent(roomCode);
             document.getElementById('puzzleOverlayUrl').textContent = baseUrl + 'puzzle-overlay.html?room=' + encodeURIComponent(roomCode);
             document.getElementById('playersOverlayUrl').textContent = baseUrl + 'players-overlay.html?room=' + encodeURIComponent(roomCode);
@@ -1497,10 +1575,13 @@ class RoueDeLaFortune {
     }
 
     updateDashboard(roomData) {
+        console.log('[DEBUG] updateDashboard - Début', roomData);
         const isHost = this.network.isHost();
+        console.log('[DEBUG] updateDashboard - isHost:', isHost);
         
         // Détecter changement de manche pour réinitialiser le résultat de la roue
         if (!this.currentDashboardRound || this.currentDashboardRound !== roomData.currentRound) {
+            console.log('[DEBUG] updateDashboard - Changement de manche:', this.currentDashboardRound, '->', roomData.currentRound);
             this.currentDashboardRound = roomData.currentRound;
             // Réinitialiser l'affichage du résultat de la roue
             const wheelValue = document.getElementById('wheelValue');
@@ -1512,8 +1593,13 @@ class RoueDeLaFortune {
                 playerWheelValue.textContent = '-';
             }
             
+            // Réinitialiser lastWheelResult pour permettre une nouvelle détection
+            this.lastWheelResult = null;
+            console.log('[DEBUG] updateDashboard - lastWheelResult réinitialisé');
+            
             // Recréer les roues avec les nouveaux segments mélangés
             if (isHost) {
+                console.log('[DEBUG] updateDashboard - Recréation de la roue host');
                 this.wheelRotation = 0;
                 const wheelElement = document.getElementById('wheelElement');
                 if (wheelElement) {
@@ -1536,17 +1622,23 @@ class RoueDeLaFortune {
         
         // Animer la roue si le résultat change (même logique que l'overlay)
         if (roomData.wheelResult && roomData.wheelResult !== this.lastWheelResult) {
+            console.log('[DEBUG] updateDashboard - Nouveau wheelResult détecté:', roomData.wheelResult, '(ancien:', this.lastWheelResult, ')');
             this.lastWheelResult = roomData.wheelResult;
             
             const targetSegment = this.wheel.segments.find(seg => seg.value === roomData.wheelResult);
             if (targetSegment) {
                 const segmentIndex = this.wheel.segments.indexOf(targetSegment);
+                console.log('[DEBUG] updateDashboard - Segment trouvé à l\'index:', segmentIndex);
                 
                 if (isHost) {
+                    console.log('[DEBUG] updateDashboard - Animation roue host');
                     this.animateDashboardWheel('wheelElement', 'wheelResult', segmentIndex, roomData.wheelResult, 'wheelRotation');
                 } else {
+                    console.log('[DEBUG] updateDashboard - Animation roue joueur');
                     this.animateDashboardWheel('wheelElementPlayer', 'wheelResultPlayer', segmentIndex, roomData.wheelResult, 'wheelRotationPlayer');
                 }
+            } else {
+                console.error('[DEBUG] updateDashboard - Segment non trouvé pour:', roomData.wheelResult);
             }
         }
         
@@ -1574,6 +1666,36 @@ class RoueDeLaFortune {
 
         // Clavier
         this.ui.createLetterKeyboard(roomData);
+
+        // Synchroniser les toggles avec l'état actuel (uniquement pour le host)
+        if (isHost && roomData.settings) {
+            const streamerToggle = document.getElementById('streamerModeToggle');
+            if (streamerToggle) {
+                streamerToggle.checked = roomData.settings.streamerMode || false;
+                // Activer le toggle maintenant que les données sont disponibles
+                streamerToggle.disabled = false;
+                
+                // Afficher/masquer les overlay links
+                if (roomData.settings.streamerMode) {
+                    const roomCode = this.network.getCurrentRoomCode();
+                    const baseUrl = window.location.origin + window.location.pathname.replace('dashboard.html', '');
+                    document.getElementById('gameOverlayUrl').textContent = baseUrl + 'game-overlay.html?room=' + encodeURIComponent(roomCode);
+                    document.getElementById('wheelOverlayUrl').textContent = baseUrl + 'wheel-overlay.html?room=' + encodeURIComponent(roomCode);
+                    document.getElementById('puzzleOverlayUrl').textContent = baseUrl + 'puzzle-overlay.html?room=' + encodeURIComponent(roomCode);
+                    document.getElementById('playersOverlayUrl').textContent = baseUrl + 'players-overlay.html?room=' + encodeURIComponent(roomCode);
+                    this.ui.show('overlayLinks');
+                } else {
+                    this.ui.hide('overlayLinks');
+                }
+            }
+            
+            const chromaToggle = document.getElementById('chromaKeyToggle');
+            if (chromaToggle) {
+                chromaToggle.checked = roomData.settings.chromaKey || false;
+                // Activer le toggle maintenant que les données sont disponibles
+                chromaToggle.disabled = false;
+            }
+        }
 
         // Vue joueur - mise à jour des sections spécifiques
         if (!isHost) {
@@ -1780,14 +1902,20 @@ class RoueDeLaFortune {
     }
 
     animateDashboardWheel(wheelElementId, resultElementId, segmentIndex, resultValue, rotationProperty) {
+        console.log('[DEBUG] animateDashboardWheel - Début:', wheelElementId, 'segment:', segmentIndex, 'valeur:', resultValue);
         const wheelElement = document.getElementById(wheelElementId);
         const resultElement = document.getElementById(resultElementId);
         
-        if (!wheelElement) return;
+        if (!wheelElement) {
+            console.error('[DEBUG] animateDashboardWheel - wheelElement introuvable:', wheelElementId);
+            return;
+        }
+        console.log('[DEBUG] animateDashboardWheel - wheelElement trouvé');
 
         // Calculer l'angle de rotation pour atteindre le segment
         const segmentAngle = 360 / this.wheel.segments.length;
         const targetAngle = segmentIndex * segmentAngle;
+        console.log('[DEBUG] animateDashboardWheel - segmentAngle:', segmentAngle, 'targetAngle:', targetAngle);
         
         // Nombre minimum de tours complets (au moins 5 tours)
         const minSpins = 5;
@@ -1795,13 +1923,16 @@ class RoueDeLaFortune {
         // Calculer la rotation totale en tournant toujours dans le sens horaire
         const additionalRotation = (360 * minSpins) + targetAngle;
         this[rotationProperty] += additionalRotation;
+        console.log('[DEBUG] animateDashboardWheel - Rotation totale:', this[rotationProperty]);
 
         // Appliquer la rotation avec animation
         wheelElement.style.transition = 'transform 4s cubic-bezier(0.17, 0.67, 0.12, 0.99)';
         wheelElement.style.transform = `rotate(${this[rotationProperty]}deg)`;
+        console.log('[DEBUG] animateDashboardWheel - Animation appliquée');
 
         // Afficher le résultat après l'animation avec effet pop
         setTimeout(() => {
+            console.log('[DEBUG] animateDashboardWheel - Affichage du résultat après 4s');
             if (resultElement) {
                 resultElement.textContent = resultValue;
                 resultElement.classList.remove('hidden');
@@ -1841,12 +1972,111 @@ class RoueDeLaFortune {
     }
 
     // ==============================
+    // GAME OVERLAY (COMPLET)
+    // ==============================
+    initGameOverlay() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const roomCode = urlParams.get('room');
+        
+        if (roomCode) {
+            this.network.roomCode = roomCode;
+        }
+        
+        // Initialiser la roue
+        this.wheelRotation = 0;
+        this.lastWheelResult = null;
+        this.lastRound = 1;
+        
+        const createWheelWhenReady = () => {
+            if (this.wheel.segments && this.wheel.segments.length > 0) {
+                this.wheel.createWheel('wheelElement');
+            } else {
+                setTimeout(createWheelWhenReady, 100);
+            }
+        };
+        createWheelWhenReady();
+    }
+
+    updateGameOverlay(roomData) {
+        if (!roomData) {
+            document.body.innerHTML = '';
+            document.body.style.background = 'white';
+            return;
+        }
+        
+        // Manche
+        const roundElement = document.getElementById('currentRound');
+        if (roundElement) {
+            roundElement.textContent = roomData.currentRound || 1;
+        }
+        
+        // Joueur actuel
+        const players = roomData.players.filter(p => p.role === 'player');
+        const currentPlayer = players[roomData.currentPlayerIndex];
+        const playerNameElement = document.getElementById('currentPlayerName');
+        if (playerNameElement && currentPlayer) {
+            playerNameElement.textContent = currentPlayer.name;
+        }
+        
+        // Puzzle
+        this.ui.createPuzzleGrid(roomData);
+        
+        // Joueurs
+        const playersContainer = document.getElementById('playersContainer');
+        if (playersContainer && players.length > 0) {
+            playersContainer.innerHTML = '';
+            players.forEach((player, index) => {
+                const playerCard = document.createElement('div');
+                playerCard.className = `player-card player-${index + 1}`;
+                if (roomData.currentPlayerIndex === index) {
+                    playerCard.classList.add('active');
+                }
+                
+                playerCard.innerHTML = `
+                    <div class="player-name">${player.name}</div>
+                    <div class="player-round-money">${player.roundMoney}€</div>
+                    <div class="player-total-money">Total: ${player.totalMoney}€</div>
+                `;
+                
+                playersContainer.appendChild(playerCard);
+            });
+        }
+        
+        // Animation de la roue
+        if (roomData.currentRound !== this.lastRound) {
+            this.lastRound = roomData.currentRound;
+            this.wheelRotation = 0;
+            
+            const wheelElement = document.getElementById('wheelElement');
+            if (wheelElement) {
+                wheelElement.style.transition = 'none';
+                wheelElement.style.transform = 'rotate(0deg)';
+                wheelElement.offsetHeight;
+            }
+            
+            this.wheel.createWheel('wheelElement');
+        }
+        
+        if (roomData.wheelResult && roomData.wheelResult !== this.lastWheelResult) {
+            this.lastWheelResult = roomData.wheelResult;
+            
+            const targetSegment = this.wheel.segments.find(seg => seg.value === roomData.wheelResult);
+            if (targetSegment) {
+                const segmentIndex = this.wheel.segments.indexOf(targetSegment);
+                this.animateWheelToSegment(segmentIndex, roomData.wheelResult);
+            }
+        }
+    }
+
+    // ==============================
     // GESTION DES MISES À JOUR
     // ==============================
     handleRoomUpdate(roomData) {
+        console.log('[DEBUG] handleRoomUpdate - Début', roomData ? 'roomData OK' : 'roomData NULL');
         // Vérifier si la room existe toujours
         const roomCode = this.network.getCurrentRoomCode();
         if (!roomData && roomCode) {
+            console.warn('[DEBUG] handleRoomUpdate - Room supprimée, redirection');
             // La room a été supprimée - expulser le joueur
             alert('La partie a été arrêtée par le présentateur.');
             sessionStorage.removeItem('currentRoomCode');
@@ -1883,15 +2113,19 @@ class RoueDeLaFortune {
 
         switch (this.currentPage) {
             case 'index':
+                console.log('[DEBUG] handleRoomUpdate - Mise à jour page index');
                 this.updateLobby(roomData);
                 break;
             case 'dashboard':
+                console.log('[DEBUG] handleRoomUpdate - Mise à jour dashboard');
                 this.updateDashboard(roomData);
                 break;
             case 'wheel':
+                console.log('[DEBUG] handleRoomUpdate - Mise à jour wheel overlay');
                 this.updateWheelOverlay(roomData);
                 break;
             case 'puzzle':
+                console.log('[DEBUG] handleRoomUpdate - Mise à jour puzzle overlay');
                 this.ui.createPuzzleGrid(roomData);
                 // Si roomData est null, la room a été supprimée
                 if (!roomData) {
@@ -1907,10 +2141,14 @@ class RoueDeLaFortune {
                     document.body.style.background = 'white';
                 }
                 break;
+            case 'game-overlay':
+                this.updateGameOverlay(roomData);
+                break;
         }
 
-        // Chroma key
-        if (roomData.settings) {
+        // Chroma key - appliquer UNIQUEMENT aux overlays (pas au dashboard)
+        // Les overlays (wheel, puzzle, players, game-overlay) ont le fond magenta quand activé
+        if (roomData.settings && (this.currentPage === 'wheel' || this.currentPage === 'puzzle' || this.currentPage === 'players' || this.currentPage === 'game-overlay')) {
             this.ui.toggleChromaKey(roomData.settings.chromaKey || false);
         }
     }

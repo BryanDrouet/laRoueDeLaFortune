@@ -302,11 +302,11 @@ export class UIManager {
         chatMessages.scrollTop = chatMessages.scrollHeight;
     }
 
-    // Afficher ou masquer le fond chroma key (fond vert)
+    // Afficher ou masquer le fond chroma key (fond magenta)
     toggleChromaKey(enabled) {
         if (enabled) {
             document.body.classList.add('chroma-key');
-            document.body.style.background = '#00FF00';
+            document.body.style.background = '#FF00FF'; // Magenta pour éviter les conflits avec les couleurs vertes de la roue
         } else {
             document.body.classList.remove('chroma-key');
             // Restaurer le fond par défaut défini dans colors.css

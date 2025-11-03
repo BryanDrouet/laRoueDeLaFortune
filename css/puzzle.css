@@ -110,12 +110,15 @@
     cursor: pointer;
     transition: all 0.3s;
     border: 2px solid var(--color-primary);
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
 }
 
-.letter-key:hover {
-    transform: scale(1.1);
+.letter-key:hover:not(.used):not(.vowel):not([disabled]) {
+    transform: scale(1.15);
     background: var(--color-secondary);
     color: var(--color-text-dark);
+    box-shadow: 0 4px 15px rgba(255, 215, 0, 0.5);
+    border-color: var(--color-secondary);
 }
 
 .letter-key.selected {
@@ -168,7 +171,48 @@
     color: var(--color-text-dark);
 }
 
+/* Affichage de la lettre sélectionnée */
+.selected-letter-display {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 15px;
+    padding: 15px;
+    background: var(--color-background);
+    border-radius: 10px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+}
+
+.selected-letter-display .label {
+    font-size: 18px;
+    font-weight: bold;
+    color: var(--color-text-light);
+}
+
+.selected-letter-value {
+    font-size: 48px;
+    font-weight: bold;
+    color: var(--color-secondary);
+    background: var(--gradient-dark);
+    padding: 10px 30px;
+    border-radius: 12px;
+    min-width: 80px;
+    text-align: center;
+    text-shadow: var(--text-shadow-lg);
+    border: 3px solid var(--color-secondary);
+}
+
+.selected-letter-display .hint {
+    font-size: 14px;
+    color: var(--color-info);
+    font-style: italic;
+    flex-basis: 100%;
+    text-align: center;
+}
+
 /* Fond chroma key */
 body.chroma-key .puzzle-container {
-    background: var(--color-chroma-green);
+    background: var(--color-chroma-key);
 }
+

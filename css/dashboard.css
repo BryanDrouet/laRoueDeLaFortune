@@ -20,6 +20,17 @@
     margin-bottom: 20px;
 }
 
+.section-instruction {
+    background: var(--color-background);
+    padding: 12px 15px;
+    border-radius: 8px;
+    border-left: 4px solid var(--color-info);
+    margin-bottom: 15px;
+    color: var(--color-text-light);
+    font-size: 14px;
+    line-height: 1.5;
+}
+
 /* Vue Joueur */
 #playerView {
     padding: 20px;

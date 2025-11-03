@@ -47,8 +47,8 @@
     --puzzle-revealed: #FFD700;
     --puzzle-border: #FFFFFF;
     
-    /* Couleurs pour le chroma key */
-    --color-chroma-green: #00FF00;
+    /* Couleurs pour le chroma key - Utilise du magenta pour éviter les conflits avec les couleurs vertes de la roue */
+    --color-chroma-key: #FF00FF;
     
     /* Couleurs des joueurs */
     --player-1-color: #FF6B35;

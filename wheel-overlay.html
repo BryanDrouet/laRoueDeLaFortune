@@ -6,23 +6,18 @@
     <title>Roue Overlay - La Roue de la Fortune</title>
     <link rel="stylesheet" href="css/colors.css">
     <link rel="stylesheet" href="css/wheel.css">
+    <link rel="stylesheet" href="css/overlay-background.css">
     <script>
         // Overlay public - vérifier uniquement que le code de room est fourni
         const urlParams = new URLSearchParams(window.location.search);
         const roomCode = urlParams.get('room');
         
         if (!roomCode) {
+            // Si pas de code de room, afficher une page blanche
             document.body.innerHTML = '';
             document.body.style.background = 'white';
-        } else {
-            // Vérifier si la room existe dans le localStorage
-            const roomData = localStorage.getItem(`room_${roomCode}`);
-            if (!roomData) {
-                // La room n'existe pas ou a été supprimée - afficher une page blanche
-                document.body.innerHTML = '';
-                document.body.style.background = 'white';
-            }
         }
+        // Pas de vérification localStorage - les données seront chargées depuis Firebase
     </script>
     <style>
         body {
@@ -32,11 +27,28 @@
             justify-content: center;
             align-items: center;
             min-height: 100vh;
-            background: var(--color-background);
+            overflow: hidden;
         }
     </style>
 </head>
 <body>
+    <!-- Fond stylisé -->
+    <div class="overlay-background"></div>
+    
+    <!-- Bordures -->
+    <div class="overlay-border"></div>
+    
+    <!-- Coins décoratifs -->
+    <div class="overlay-corner top-left"></div>
+    <div class="overlay-corner top-right"></div>
+    <div class="overlay-corner bottom-left"></div>
+    <div class="overlay-corner bottom-right"></div>
+    
+    <!-- En-tête -->
+    <div class="overlay-header">
+        <div class="overlay-title">🎬 LA ROUE 🎬</div>
+    </div>
+
     <div class="wheel-container">
         <div class="wheel-wrapper">
             <div class="wheel-pointer"></div>

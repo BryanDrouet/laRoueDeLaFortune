@@ -8,6 +8,7 @@
     <link rel="stylesheet" href="css/main.css">
     <link rel="stylesheet" href="css/dashboard.css">
     <link rel="stylesheet" href="css/puzzle.css">
+    <link rel="stylesheet" href="css/wheel.css">
     <script>
         // Protection simplifiée - vérifier seulement le code de room et les données de session
         const urlParams = new URLSearchParams(window.location.search);
@@ -117,7 +118,13 @@
 
             <!-- Clavier de lettres -->
             <div class="dashboard-section">
-                <h3>🔤 Lettres proposées</h3>
+                <h3>🔤 Sélection des lettres</h3>
+                <p class="section-instruction">Cliquez sur une consonne ou utilisez votre clavier pour sélectionner la lettre proposée par le joueur</p>
+                <div id="selectedLetterDisplay" class="selected-letter-display">
+                    <span class="label">Lettre sélectionnée :</span>
+                    <span class="selected-letter-value" id="selectedLetterValue">-</span>
+                    <span class="hint">Cliquez sur une lettre ou utilisez le clavier</span>
+                </div>
                 <div id="letterKeyboard" class="alphabet-keyboard"></div>
             </div>
 
@@ -128,21 +135,24 @@
                     <div class="setting-item">
                         <span>Mode Streameur</span>
                         <label class="toggle-switch">
-                            <input type="checkbox" id="streamerModeToggle">
+                            <input type="checkbox" id="streamerModeToggle" disabled>
                             <span class="toggle-slider"></span>
                         </label>
                     </div>
                     <div id="overlayLinks" class="hidden overlay-links">
                         <p><strong>URLs des overlays :</strong></p>
+                        <p><strong>Overlay complet (tout-en-un) :</strong></p>
+                        <p class="overlay-url" id="gameOverlayUrl"></p>
+                        <p><strong>Overlays individuels :</strong></p>
                         <p class="overlay-url" id="wheelOverlayUrl"></p>
                         <p class="overlay-url" id="puzzleOverlayUrl"></p>
                         <p class="overlay-url" id="playersOverlayUrl"></p>
                     </div>
 
                     <div class="setting-item">
-                        <span>Fond vert (Chroma Key)</span>
+                        <span>Fond magenta (Chroma Key)</span>
                         <label class="toggle-switch">
-                            <input type="checkbox" id="chromaKeyToggle">
+                            <input type="checkbox" id="chromaKeyToggle" disabled>
                             <span class="toggle-slider"></span>
                         </label>
                     </div>

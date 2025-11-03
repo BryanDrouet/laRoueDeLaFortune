@@ -1,0 +1,204 @@
+/* ====================================
+   FOND STYLISÉ POUR LES OVERLAYS
+   Style émission TV - Optimisé performance
+   ==================================== */
+
+/* Fond principal avec dégradé élégant */
+.overlay-background {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -1;
+    background: linear-gradient(135deg, #0a0e27 0%, #1a1a2e 50%, #16213e 100%);
+    overflow: hidden;
+}
+
+/* Effet de brillance subtil (pas d'animation pour performance) */
+.overlay-background::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(255, 215, 0, 0.03) 0%, transparent 70%);
+    pointer-events: none;
+}
+
+/* Grille de points subtile en bas */
+.overlay-background::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 30%;
+    background-image: 
+        radial-gradient(circle, rgba(255, 215, 0, 0.1) 1px, transparent 1px);
+    background-size: 30px 30px;
+    opacity: 0.3;
+    pointer-events: none;
+}
+
+/* Bordure dorée élégante sur les côtés */
+.overlay-border {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 1000;
+}
+
+.overlay-border::before,
+.overlay-border::after {
+    content: '';
+    position: absolute;
+    background: linear-gradient(180deg, 
+        rgba(255, 215, 0, 0.4) 0%, 
+        rgba(255, 215, 0, 0.1) 50%, 
+        rgba(255, 215, 0, 0.4) 100%);
+    width: 4px;
+    height: 100%;
+}
+
+.overlay-border::before {
+    left: 0;
+    box-shadow: 2px 0 10px rgba(255, 215, 0, 0.3);
+}
+
+.overlay-border::after {
+    right: 0;
+    box-shadow: -2px 0 10px rgba(255, 215, 0, 0.3);
+}
+
+/* Coins décoratifs */
+.overlay-corner {
+    position: fixed;
+    width: 60px;
+    height: 60px;
+    border: 3px solid rgba(255, 215, 0, 0.5);
+    pointer-events: none;
+    z-index: 1001;
+}
+
+.overlay-corner.top-left {
+    top: 20px;
+    left: 20px;
+    border-right: none;
+    border-bottom: none;
+    box-shadow: -6px -6px 7px 0px rgba(255, 215, 0, 0.1);
+}
+
+.overlay-corner.top-right {
+    top: 20px;
+    right: 20px;
+    border-left: none;
+    border-bottom: none;
+    box-shadow: 6px -6px 7px 0px rgba(255, 215, 0, 0.1);
+}
+
+.overlay-corner.bottom-left {
+    bottom: 20px;
+    left: 20px;
+    border-right: none;
+    border-top: none;
+    box-shadow: -6px 6px 7px 0px rgba(255, 215, 0, 0.1);
+}
+
+.overlay-corner.bottom-right {
+    bottom: 20px;
+    right: 20px;
+    border-left: none;
+    border-top: none;
+    box-shadow: 6px 6px 7px 0px rgba(255, 215, 0, 0.1);
+}
+
+/* Logo/titre de l'émission en haut */
+.overlay-header {
+    position: fixed;
+    top: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    text-align: center;
+    z-index: 1002;
+    pointer-events: none;
+}
+
+.overlay-title {
+    font-size: 28px;
+    font-weight: bold;
+    color: var(--color-secondary);
+    text-shadow: 
+        0 0 10px rgba(255, 215, 0, 0.8),
+        2px 2px 4px rgba(0, 0, 0, 0.8);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+}
+
+.overlay-subtitle {
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.7);
+    text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.8);
+    margin-top: 5px;
+}
+
+/* Responsive - simplifier sur mobile */
+@media (max-width: 768px) {
+    .overlay-corner {
+        width: 40px;
+        height: 40px;
+    }
+    
+    .overlay-corner.top-left,
+    .overlay-corner.top-right {
+        top: 10px;
+    }
+    
+    .overlay-corner.bottom-left,
+    .overlay-corner.bottom-right {
+        bottom: 10px;
+    }
+    
+    .overlay-corner.top-left,
+    .overlay-corner.bottom-left {
+        left: 10px;
+    }
+    
+    .overlay-corner.top-right,
+    .overlay-corner.bottom-right {
+        right: 10px;
+    }
+    
+    .overlay-title {
+        font-size: 20px;
+    }
+    
+    .overlay-subtitle {
+        font-size: 10px;
+    }
+    
+    .overlay-border::before,
+    .overlay-border::after {
+        width: 2px;
+    }
+}
+
+/* Très petits écrans - minimaliste */
+@media (max-width: 480px) {
+    .overlay-corner {
+        display: none;
+    }
+    
+    .overlay-border::before,
+    .overlay-border::after {
+        display: none;
+    }
+    
+    .overlay-title {
+        font-size: 16px;
+    }
+}

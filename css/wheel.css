@@ -138,5 +138,5 @@
 
 /* Fond chroma key */
 body.chroma-key {
-    background: var(--color-chroma-green) !important;
+    background: var(--color-chroma-key) !important;
 }
