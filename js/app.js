@@ -1334,19 +1334,23 @@ class RoueDeLaFortune {
         const selectedSegment = this.wheel.segments[randomIndex];
         console.log('[DEBUG] spinWheel - Index:', randomIndex, 'Segment sélectionné:', selectedSegment);
 
-        // Mettre à jour lastWheelResult pour éviter la réanimation
+        // Lancer l'animation immédiatement pour le gérant (pas besoin d'attendre Firebase)
+        const segmentIndex = this.wheel.segments.indexOf(selectedSegment);
+        console.log('[DEBUG] spinWheel - Animation roue gérant immédiate');
+        this.animateDashboardWheel('wheelElement', 'wheelValue', segmentIndex, selectedSegment.value, 'wheelRotation');
+        
+        // Mettre à jour lastWheelResult pour éviter la réanimation quand Firebase reviendra
         this.lastWheelResult = selectedSegment.value;
 
-        // Mettre à jour le résultat dans roomData - cela déclenchera l'animation de TOUTES les roues
-        // (dashboard gérant, dashboard joueurs, et overlay) via handleRoomUpdate()
+        // Mettre à jour le résultat dans roomData - cela déclenchera l'animation pour les AUTRES
+        // (dashboard joueurs et overlay) via handleRoomUpdate()
         console.log('[DEBUG] spinWheel - Mise à jour wheelResult dans Firebase');
         this.network.updateRoomState({ wheelResult: selectedSegment.value });
 
         // Attendre la fin de l'animation (4 secondes) avant d'activer les boutons
         setTimeout(() => {
-            console.log('[DEBUG] spinWheel - Fin de l\'animation, affichage du résultat');
-            // Afficher le résultat dans l'UI du gérant
-            this.ui.displayWheelResult(selectedSegment);
+            console.log('[DEBUG] spinWheel - Fin de l\'animation, activation des boutons');
+            // L'affichage du résultat est déjà géré par animateDashboardWheel
             
             if (spinBtn) spinBtn.disabled = false;
 
@@ -2018,11 +2022,21 @@ class RoueDeLaFortune {
     animateDashboardWheel(wheelElementId, resultElementId, segmentIndex, resultValue, rotationProperty) {
         console.log('[DEBUG] animateDashboardWheel - Début:', wheelElementId, 'segment:', segmentIndex, 'valeur:', resultValue);
         console.log('[DEBUG] animateDashboardWheel - rotationProperty:', rotationProperty, 'valeur actuelle:', this[rotationProperty]);
+        
+        // Empêcher les animations multiples simultanées
+        const animatingFlag = rotationProperty + '_animating';
+        if (this[animatingFlag]) {
+            console.log('[DEBUG] animateDashboardWheel - Animation déjà en cours, ignorée');
+            return;
+        }
+        this[animatingFlag] = true;
+        
         const wheelElement = document.getElementById(wheelElementId);
         const resultElement = document.getElementById(resultElementId);
         
         if (!wheelElement) {
             console.error('[DEBUG] animateDashboardWheel - wheelElement introuvable:', wheelElementId);
+            this[animatingFlag] = false;
             return;
         }
         console.log('[DEBUG] animateDashboardWheel - wheelElement trouvé');
@@ -2061,13 +2075,18 @@ class RoueDeLaFortune {
         wheelElement.style.transform = `rotate(${this[rotationProperty]}deg)`;
         console.log('[DEBUG] animateDashboardWheel - Animation appliquée, transform:', wheelElement.style.transform);
 
-        // Afficher le résultat après l'animation
+        // Afficher le résultat après l'animation et débloquer les animations futures
         setTimeout(() => {
             console.log('[DEBUG] animateDashboardWheel - Affichage du résultat après 4s');
             if (resultElement) {
-                resultElement.textContent = resultValue;
+                // Ajouter € si c'est un nombre
+                const displayValue = !isNaN(parseInt(resultValue)) ? resultValue + '€' : resultValue;
+                resultElement.textContent = displayValue;
                 resultElement.classList.remove('hidden');
             }
+            // Débloquer les animations futures
+            const animatingFlag = rotationProperty + '_animating';
+            this[animatingFlag] = false;
         }, 4000);
     }
 
