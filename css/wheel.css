@@ -1,17 +1,18 @@
 /* Roue de la Fortune - 100% CSS */
 
 .wheel-container {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    min-height: 100vh;
-    position: relative;
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
 }
+
 
 .wheel-wrapper {
     position: relative;
-    width: 600px;
-    height: 600px;
+    width: 900px;
+    height: 900px;
 }
 
 /* La roue principale */
@@ -21,7 +22,7 @@
     border-radius: 50%;
     position: relative;
     box-shadow: var(--shadow-xl), 0 0 50px rgba(255, 215, 0, 0.3);
-    border: 10px solid var(--color-secondary);
+    border: 12px solid var(--color-secondary);
     transform-origin: center;
     transition: transform 4s cubic-bezier(0.17, 0.67, 0.12, 0.99);
     overflow: hidden;
@@ -34,26 +35,26 @@
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    width: 80px;
-    height: 80px;
+    width: 120px;
+    height: 120px;
     background: var(--gradient-gold);
     border-radius: 50%;
     z-index: 100;
     box-shadow: var(--shadow-gold-glow);
-    border: 5px solid white;
+    border: 8px solid white;
 }
 
 /* Flèche indicatrice */
 .wheel-pointer {
     position: absolute;
-    top: -40px;
+    top: -60px;
     left: 50%;
     transform: translateX(-50%);
     width: 0;
     height: 0;
-    border-left: 30px solid transparent;
-    border-right: 30px solid transparent;
-    border-top: 50px solid var(--color-danger);
+    border-left: 50px solid transparent;
+    border-right: 50px solid transparent;
+    border-top: 80px solid var(--color-danger);
     z-index: 101;
     filter: var(--filter-drop-shadow);
 }
@@ -73,19 +74,21 @@
 /* Texte dans les segments */
 .segment-text {
     position: absolute;
-    top: 20%;
+    top: 5%;
     left: 50%;
-    transform: translateX(-50%);
+    transform: rotate(180deg);
     font-weight: bold;
-    font-size: 16px;
-    text-align: center;
+    font-size: 22px;
+    text-align: top;
     color: white;
-    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+    text-shadow: 5px 2px 4px rgba(0, 0, 0, 0.8);
     width: auto;
-    max-width: 120px;
-    white-space: nowrap;
+    max-width: 140px;
+    word-wrap: break-word;
     pointer-events: none;
     line-height: 1.2;
+    writing-mode: vertical-rl;
+    letter-spacing: 1px;
 }
 
 /* Animation de rotation */
@@ -139,4 +142,96 @@
 /* Fond chroma key */
 body.chroma-key {
     background: var(--color-chroma-key) !important;
+}
+
+/* Ajustements pour le dashboard (plus petite) */
+.dashboard-section .wheel-wrapper {
+  width: 100vw;
+  height: 100vw;
+  max-width: 100vh;
+  max-height: 100vh;
+  margin: 0 auto;
+  /* Ajoute éventuellement z-index: 2; si besoin d'être devant */
+}
+
+
+
+
+.dashboard-section .wheel-center {
+    width: 80px;
+    height: 80px;
+    border: 6px solid white;
+}
+
+.dashboard-section .wheel-pointer {
+    top: -40px;
+    border-left: 35px solid transparent;
+    border-right: 35px solid transparent;
+    border-top: 55px solid var(--color-danger);
+}
+
+.dashboard-section .segment-text {
+    font-size: 18px;
+    max-width: 100px;
+}
+
+/* Responsivité pour les petits écrans */
+@media (max-width: 768px) {
+    .wheel-wrapper {
+        width: 450px;
+        height: 450px;
+    }
+    
+    .wheel-center {
+        width: 90px;
+        height: 90px;
+        border: 6px solid white;
+    }
+    
+    .wheel-pointer {
+        top: -45px;
+        border-left: 40px solid transparent;
+        border-right: 40px solid transparent;
+        border-top: 60px solid var(--color-danger);
+    }
+    
+    .segment-text {
+        font-size: 18px;
+        max-width: 110px;
+    }
+    
+    .dashboard-section .wheel-wrapper {
+        width: 350px;
+        height: 350px;
+    }
+    
+    .dashboard-section .wheel-center {
+        width: 60px;
+        height: 60px;
+        border: 4px solid white;
+    }
+    
+    .dashboard-section .wheel-pointer {
+        top: -30px;
+        border-left: 25px solid transparent;
+        border-right: 25px solid transparent;
+        border-top: 40px solid var(--color-danger);
+    }
+    
+    .dashboard-section .segment-text {
+        font-size: 14px;
+        max-width: 80px;
+    }
+}
+
+@media (max-width: 480px) {
+    .wheel-wrapper {
+        width: 350px;
+        height: 350px;
+    }
+    
+    .dashboard-section .wheel-wrapper {
+        width: 280px;
+        height: 280px;
+    }
 }
