@@ -9,39 +9,16 @@
     <link rel="stylesheet" href="css/dashboard.css">
     <link rel="stylesheet" href="css/puzzle.css">
     <script>
-        // Protection - rediriger si pas de session active OU si joueur non enregistré dans la room
+        // Protection simplifiée - vérifier seulement le code de room et les données de session
         const urlParams = new URLSearchParams(window.location.search);
         const roomCodeFromUrl = urlParams.get('room');
         const roomCodeFromSession = sessionStorage.getItem('currentRoomCode');
         const roomCode = roomCodeFromUrl || roomCodeFromSession;
+        const playerDataStr = sessionStorage.getItem('currentPlayerData');
         
-        if (!roomCode) {
+        if (!roomCode || !playerDataStr) {
+            alert('Vous devez d\'abord rejoindre cette partie depuis la page d\'accueil.');
             window.location.href = 'index.html';
-        } else {
-            // Vérifier que le joueur existe dans la room
-            const roomData = localStorage.getItem(`room_${roomCode}`);
-            const playerDataStr = sessionStorage.getItem('currentPlayerData');
-            
-            if (!roomData || !playerDataStr) {
-                alert('Vous devez d\'abord rejoindre cette partie depuis la page d\'accueil.');
-                window.location.href = 'index.html';
-            } else {
-                try {
-                    const room = JSON.parse(roomData);
-                    const playerData = JSON.parse(playerDataStr);
-                    
-                    // Vérifier que le joueur est bien dans la liste des joueurs de la room
-                    const playerExists = room.players.some(p => p.id === playerData.id);
-                    
-                    if (!playerExists) {
-                        alert('Vous n\'êtes pas enregistré dans cette partie.');
-                        window.location.href = 'index.html';
-                    }
-                } catch (e) {
-                    console.error('Erreur de validation:', e);
-                    window.location.href = 'index.html';
-                }
-            }
         }
     </script>
 </head>
