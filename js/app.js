@@ -1660,7 +1660,8 @@ class RoueDeLaFortune {
         console.log('[DEBUG] updateDashboard - isHost:', isHost);
         
         // Détecter changement de manche pour réinitialiser le résultat de la roue
-        if (!this.currentDashboardRound || this.currentDashboardRound !== roomData.currentRound) {
+        // Utiliser !== undefined pour différencier l'initialisation d'un vrai changement
+        if (this.currentDashboardRound !== undefined && this.currentDashboardRound !== roomData.currentRound) {
             console.log('[DEBUG] updateDashboard - Changement de manche:', this.currentDashboardRound, '->', roomData.currentRound);
             this.currentDashboardRound = roomData.currentRound;
             // Réinitialiser l'affichage du résultat de la roue
@@ -1674,7 +1675,11 @@ class RoueDeLaFortune {
             }
             
             // Réinitialiser lastWheelResult pour permettre une nouvelle détection
-            this.lastWheelResult = null;
+            if (isHost) {
+                this.lastWheelResult = null;
+            } else {
+                this.lastWheelResultPlayer = null;
+            }
             console.log('[DEBUG] updateDashboard - lastWheelResult réinitialisé');
             
             // Recréer les roues avec les nouveaux segments mélangés
@@ -1698,6 +1703,10 @@ class RoueDeLaFortune {
                     this.wheel.createWheel('wheelElementPlayer');
                 }
             }
+        } else if (this.currentDashboardRound === undefined) {
+            // Première initialisation : juste mémoriser la manche sans réinitialiser
+            console.log('[DEBUG] updateDashboard - Initialisation de la manche:', roomData.currentRound);
+            this.currentDashboardRound = roomData.currentRound;
         }
         
         // Animer la roue si le résultat change (même logique que l'overlay)
