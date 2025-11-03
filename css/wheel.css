@@ -20,10 +20,12 @@
     height: 100%;
     border-radius: 50%;
     position: relative;
-    box-shadow: var(--shadow-xl);
+    box-shadow: var(--shadow-xl), 0 0 50px rgba(255, 215, 0, 0.3);
     border: 10px solid var(--color-secondary);
     transform-origin: center;
     transition: transform 4s cubic-bezier(0.17, 0.67, 0.12, 0.99);
+    overflow: hidden;
+    background: transparent;
 }
 
 /* Centre de la roue */
@@ -56,54 +58,35 @@
     filter: var(--filter-drop-shadow);
 }
 
-/* Segments de la roue - 22 segments */
+/* Segments de la roue - styles de base */
 .wheel-segment {
     position: absolute;
     width: 100%;
     height: 100%;
     top: 0;
     left: 0;
-    clip-path: polygon(50% 50%, 50% 0%, 54.5% 0%);
-    transform-origin: center;
+    transform-origin: center center;
+    overflow: visible;
+    box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.2);
 }
 
 /* Texte dans les segments */
 .segment-text {
     position: absolute;
-    top: 15%;
+    top: 20%;
     left: 50%;
-    transform: translateX(-50%) rotate(0deg);
+    transform: translateX(-50%);
     font-weight: bold;
-    font-size: 14px;
+    font-size: 16px;
     text-align: center;
     color: white;
-    text-shadow: var(--text-shadow-sm);
-    width: 100px;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+    width: auto;
+    max-width: 120px;
+    white-space: nowrap;
+    pointer-events: none;
+    line-height: 1.2;
 }
-
-/* Rotation des 22 segments (360/22 = 16.36 degrés par segment) */
-.wheel-segment:nth-child(1) { transform: rotate(0deg); }
-.wheel-segment:nth-child(2) { transform: rotate(16.36deg); }
-.wheel-segment:nth-child(3) { transform: rotate(32.72deg); }
-.wheel-segment:nth-child(4) { transform: rotate(49.08deg); }
-.wheel-segment:nth-child(5) { transform: rotate(65.44deg); }
-.wheel-segment:nth-child(6) { transform: rotate(81.8deg); }
-.wheel-segment:nth-child(7) { transform: rotate(98.16deg); }
-.wheel-segment:nth-child(8) { transform: rotate(114.52deg); }
-.wheel-segment:nth-child(9) { transform: rotate(130.88deg); }
-.wheel-segment:nth-child(10) { transform: rotate(147.24deg); }
-.wheel-segment:nth-child(11) { transform: rotate(163.6deg); }
-.wheel-segment:nth-child(12) { transform: rotate(179.96deg); }
-.wheel-segment:nth-child(13) { transform: rotate(196.32deg); }
-.wheel-segment:nth-child(14) { transform: rotate(212.68deg); }
-.wheel-segment:nth-child(15) { transform: rotate(229.04deg); }
-.wheel-segment:nth-child(16) { transform: rotate(245.4deg); }
-.wheel-segment:nth-child(17) { transform: rotate(261.76deg); }
-.wheel-segment:nth-child(18) { transform: rotate(278.12deg); }
-.wheel-segment:nth-child(19) { transform: rotate(294.48deg); }
-.wheel-segment:nth-child(20) { transform: rotate(310.84deg); }
-.wheel-segment:nth-child(21) { transform: rotate(327.2deg); }
-.wheel-segment:nth-child(22) { transform: rotate(343.56deg); }
 
 /* Animation de rotation */
 .wheel.spinning {

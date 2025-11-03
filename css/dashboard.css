@@ -93,69 +93,6 @@
     margin-bottom: 30px;
 }
 
-/* Buzzer */
-.buzzer-section {
-    margin-top: 30px;
-}
-
-.buzzer-btn {
-    padding: 20px 40px;
-    font-size: 28px;
-    font-weight: bold;
-    background: linear-gradient(135deg, var(--color-danger), var(--color-warning));
-    color: var(--color-text-light);
-    border: 3px solid var(--color-secondary);
-    border-radius: 50px;
-    cursor: pointer;
-    transition: all 0.3s;
-    box-shadow: 0 8px 20px rgba(244, 67, 54, 0.4);
-    animation: buzzerpulse 1.5s infinite;
-}
-
-.buzzer-btn:hover {
-    transform: scale(1.05);
-    box-shadow: 0 12px 30px rgba(244, 67, 54, 0.6);
-}
-
-@keyframes buzzerpulse {
-    0%, 100% {
-        box-shadow: 0 8px 20px rgba(244, 67, 54, 0.4);
-    }
-    50% {
-        box-shadow: 0 8px 30px rgba(244, 67, 54, 0.8);
-    }
-}
-
-.buzzer-proposal {
-    margin-top: 20px;
-    padding: 20px;
-    background: var(--color-background-light);
-    border-radius: 12px;
-}
-
-.buzzer-input {
-    width: 100%;
-    padding: 15px;
-    font-size: 20px;
-    border: 2px solid var(--color-secondary);
-    border-radius: 8px;
-    background: var(--color-background);
-    color: var(--color-text-light);
-    margin-bottom: 15px;
-    text-transform: uppercase;
-}
-
-.buzzer-actions {
-    display: flex;
-    gap: 10px;
-    justify-content: center;
-}
-
-.buzzer-actions button {
-    padding: 12px 30px;
-    font-size: 18px;
-}
-
 .player-puzzle-section .puzzle-grid {
     display: flex;
     flex-wrap: wrap;
@@ -237,53 +174,65 @@
     gap: 15px;
 }
 
-/* Roue dans le dashboard */
-.wheel-container-dashboard {
-    position: relative;
-    width: 300px;
-    height: 300px;
-    margin: 20px auto;
+/* Roue dans le dashboard - styles spécifiques pour la taille réduite */
+.dashboard-section .wheel-container {
+    min-height: auto;
+    padding: 20px 0;
 }
 
-.wheel-pointer {
-    position: absolute;
-    top: -10px;
-    left: 50%;
-    transform: translateX(-50%);
-    font-size: 40px;
-    color: var(--color-secondary);
-    z-index: 10;
-    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+.dashboard-section .wheel-wrapper {
+    width: 350px;
+    height: 350px;
 }
 
-.wheel-dashboard {
-    width: 100%;
-    height: 100%;
-    border-radius: 50%;
-    position: relative;
-    border: 8px solid var(--color-secondary);
-    box-shadow: 0 0 30px rgba(255, 215, 0, 0.5);
-    transition: transform 4s cubic-bezier(0.17, 0.67, 0.12, 0.99);
+.dashboard-section .wheel {
+    border-width: 8px;
 }
 
-.wheel-dashboard .wheel-segment {
-    position: absolute;
-    width: 100%;
-    height: 100%;
-    left: 0;
-    top: 0;
-    transform-origin: center;
+.dashboard-section .wheel-center {
+    width: 60px;
+    height: 60px;
+    border-width: 4px;
 }
 
-.wheel-dashboard .segment-text {
-    position: absolute;
-    top: 15%;
-    left: 50%;
-    font-weight: bold;
-    font-size: 14px;
-    color: #FFFFFF;
-    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
-    white-space: nowrap;
+.dashboard-section .wheel-pointer {
+    top: -30px;
+    border-left: 20px solid transparent;
+    border-right: 20px solid transparent;
+    border-top: 35px solid var(--color-danger);
+}
+
+.dashboard-section .segment-text {
+    font-size: 12px;
+}
+
+.dashboard-section .wheel-result {
+    bottom: -80px;
+    padding: 15px 30px;
+    font-size: 20px;
+}
+
+/* Vue joueur - roue normale */
+#playerView .wheel-container {
+    min-height: auto;
+    padding: 30px 0;
+}
+
+#playerView .wheel-wrapper {
+    width: 500px;
+    height: 500px;
+}
+
+#playerView .wheel-center {
+    width: 70px;
+    height: 70px;
+}
+
+#playerView .wheel-pointer {
+    top: -35px;
+    border-left: 25px solid transparent;
+    border-right: 25px solid transparent;
+    border-top: 45px solid var(--color-danger);
 }
 
 .control-btn {
@@ -393,17 +342,6 @@
 
 .current-round {
     font-size: 24px;
-    font-weight: bold;
-}
-
-.round-type {
-    display: inline-block;
-    margin-left: 15px;
-    padding: 5px 15px;
-    font-size: 16px;
-    border-radius: 20px;
-    background: var(--color-warning);
-    color: var(--color-text-dark);
     font-weight: bold;
 }
 
@@ -540,6 +478,17 @@ input:checked + .toggle-slider:before {
         grid-template-columns: 1fr;
         gap: 10px;
     }
+    
+    /* Roue plus petite sur tablette */
+    .dashboard-section .wheel-wrapper {
+        width: 300px;
+        height: 300px;
+    }
+    
+    #playerView .wheel-wrapper {
+        width: 400px;
+        height: 400px;
+    }
 }
 
 @media (max-width: 768px) {
@@ -572,6 +521,26 @@ input:checked + .toggle-slider:before {
     .chat-container {
         height: 300px;
     }
+    
+    /* Roue encore plus petite sur mobile */
+    .dashboard-section .wheel-wrapper {
+        width: 250px;
+        height: 250px;
+    }
+    
+    .dashboard-section .wheel-center {
+        width: 50px;
+        height: 50px;
+    }
+    
+    .dashboard-section .segment-text {
+        font-size: 10px;
+    }
+    
+    #playerView .wheel-wrapper {
+        width: 300px;
+        height: 300px;
+    }
 }
 
 @media (max-width: 480px) {
@@ -589,5 +558,23 @@ input:checked + .toggle-slider:before {
     .setting-item {
         flex-direction: column;
         gap: 10px;
+    }
+    
+    /* Roue minimale sur très petit écran */
+    .dashboard-section .wheel-wrapper {
+        width: 200px;
+        height: 200px;
+    }
+    
+    .dashboard-section .wheel-pointer {
+        top: -20px;
+        border-left: 15px solid transparent;
+        border-right: 15px solid transparent;
+        border-top: 25px solid var(--color-danger);
+    }
+    
+    #playerView .wheel-wrapper {
+        width: 280px;
+        height: 280px;
     }
 }

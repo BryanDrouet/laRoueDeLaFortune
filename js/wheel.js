@@ -43,22 +43,28 @@ export class WheelManager {
 
         this.wheelElement.innerHTML = '';
 
-        const segmentAngle = 360 / this.segments.length;
-        const halfSegmentAngle = segmentAngle / 2;
+        const numSegments = this.segments.length;
+        const segmentAngle = 360 / numSegments;
 
         this.segments.forEach((segment, index) => {
             const segmentDiv = document.createElement('div');
             segmentDiv.className = 'wheel-segment';
             segmentDiv.style.background = segment.color;
-            segmentDiv.style.clipPath = this.getClipPath(index);
+            
+            // Appliquer la rotation du segment
+            const rotation = index * segmentAngle;
+            segmentDiv.style.transform = `rotate(${rotation}deg)`;
+            
+            // Calculer le clip-path pour créer une portion de tarte
+            segmentDiv.style.clipPath = this.getClipPath(segmentAngle);
 
             const textDiv = document.createElement('div');
             textDiv.className = 'segment-text';
             textDiv.textContent = segment.value;
-            textDiv.style.transform = `translateX(-50%) rotate(${halfSegmentAngle + (index * segmentAngle)}deg)`;
             
             // Ajuster la couleur du texte pour la lisibilité
-            if (segment.color === '#FFFFFF' || segment.color === '#FFDD00' || segment.color === '#FFD700') {
+            const lightColors = ['#FFFFFF', '#FFDD00', '#FFD700', '#FBB03B', '#92D050', '#00B0F0', '#FF9800'];
+            if (lightColors.includes(segment.color)) {
                 textDiv.style.color = '#000000';
             }
 
@@ -67,18 +73,16 @@ export class WheelManager {
         });
     }
 
-    // Calculer le clip-path pour chaque segment (dynamique selon le nombre de segments)
-    getClipPath(index) {
-        const angle = 360 / this.segments.length;
-        const startAngle = 0;
-        const endAngle = angle;
+    // Calculer le clip-path pour chaque segment (portion de tarte)
+    getClipPath(segmentAngle) {
+        // Créer une portion de tarte du centre vers le bord
+        // Utiliser un angle légèrement plus petit pour créer un léger espace entre les segments
+        const adjustedAngle = segmentAngle * 0.98; // 98% pour un léger espacement
         
-        const startX = 50 + 50 * Math.sin((startAngle * Math.PI) / 180);
-        const startY = 50 - 50 * Math.cos((startAngle * Math.PI) / 180);
-        const endX = 50 + 50 * Math.sin((endAngle * Math.PI) / 180);
-        const endY = 50 - 50 * Math.cos((endAngle * Math.PI) / 180);
+        const endX = 50 + 50 * Math.sin((adjustedAngle * Math.PI) / 180);
+        const endY = 50 - 50 * Math.cos((adjustedAngle * Math.PI) / 180);
 
-        return `polygon(50% 50%, ${startX}% ${startY}%, ${endX}% ${endY}%)`;
+        return `polygon(50% 50%, 50% 0%, ${endX}% ${endY}%)`;
     }
 
     // Faire tourner la roue

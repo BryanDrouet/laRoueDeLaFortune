@@ -1127,14 +1127,20 @@ class RoueDeLaFortune {
     }
 
     initHostDashboard() {
-        // Créer la roue dans le dashboard (même code que l'overlay)
-        if (this.wheel.segments.length > 0) {
-            this.wheel.createWheel('wheelElement');
-        }
-        
         // Initialiser le système de rotation pour l'overlay
         this.wheelRotation = 0;
         this.lastWheelResult = null;
+
+        // Créer la roue dans le dashboard (vérifier que les segments sont chargés)
+        const createWheelWhenReady = () => {
+            if (this.wheel.segments && this.wheel.segments.length > 0) {
+                this.wheel.createWheel('wheelElement');
+            } else {
+                // Réessayer après un court délai
+                setTimeout(createWheelWhenReady, 100);
+            }
+        };
+        createWheelWhenReady();
 
         const spinBtn = document.getElementById('spinWheelBtn');
         const validateBtn = document.getElementById('validateLetterBtn');
@@ -1222,77 +1228,20 @@ class RoueDeLaFortune {
     }
 
     initPlayerDashboard() {
-        // Créer la roue dans le dashboard joueur (même code que l'overlay)
-        if (this.wheel.segments.length > 0) {
-            this.wheel.createWheel('wheelElementPlayer');
-        }
-        
         // Initialiser le système de rotation pour l'overlay joueur
         this.wheelRotationPlayer = 0;
         this.lastWheelResultPlayer = null;
         
-        // Buzzer pour proposer une solution
-        const buzzerBtn = document.getElementById('buzzerBtn');
-        const buzzerProposal = document.getElementById('buzzerProposal');
-        const buzzerInput = document.getElementById('buzzerInput');
-        const buzzerSubmit = document.getElementById('buzzerSubmit');
-        const buzzerCancel = document.getElementById('buzzerCancel');
-        
-        if (buzzerBtn) {
-            buzzerBtn.addEventListener('click', () => {
-                buzzerBtn.classList.add('hidden');
-                buzzerProposal.classList.remove('hidden');
-                buzzerInput.focus();
-            });
-        }
-        
-        if (buzzerCancel) {
-            buzzerCancel.addEventListener('click', () => {
-                buzzerProposal.classList.add('hidden');
-                buzzerBtn.classList.remove('hidden');
-                buzzerInput.value = '';
-            });
-        }
-        
-        if (buzzerSubmit) {
-            buzzerSubmit.addEventListener('click', () => {
-                const proposal = buzzerInput.value.trim().toUpperCase();
-                if (proposal) {
-                    this.submitBuzzerProposal(proposal);
-                    buzzerProposal.classList.add('hidden');
-                    buzzerBtn.classList.remove('hidden');
-                    buzzerInput.value = '';
-                }
-            });
-        }
-        
-        if (buzzerInput) {
-            buzzerInput.addEventListener('keypress', (e) => {
-                if (e.key === 'Enter') {
-                    buzzerSubmit.click();
-                }
-            });
-        }
-    }
-    
-    submitBuzzerProposal(proposal) {
-        const roomCode = this.network.getCurrentRoomCode();
-        const playerData = this.network.getCurrentPlayer();
-        
-        if (!roomCode || !playerData) return;
-        
-        // Mettre en pause la révélation des lettres
-        this.network.updateRoomState({
-            letterRevealPaused: true,
-            buzzerProposal: {
-                playerName: playerData.name,
-                playerId: playerData.id,
-                proposal: proposal,
-                timestamp: Date.now()
+        // Créer la roue dans le dashboard joueur (vérifier que les segments sont chargés)
+        const createWheelWhenReady = () => {
+            if (this.wheel.segments && this.wheel.segments.length > 0) {
+                this.wheel.createWheel('wheelElementPlayer');
+            } else {
+                // Réessayer après un court délai
+                setTimeout(createWheelWhenReady, 100);
             }
-        });
-        
-        alert('Proposition envoyée ! La révélation des lettres est en pause.');
+        };
+        createWheelWhenReady();
     }
 
     spinWheel() {
@@ -1350,8 +1299,6 @@ class RoueDeLaFortune {
         } else {
             if (result.reason === 'already_used') {
                 alert('Cette lettre a déjà été proposée');
-            } else if (result.reason === 'buzzer_active') {
-                alert('Un joueur a buzzé ! La révélation des lettres est en pause. Résolvez la proposition d\'abord.');
             }
         }
 
@@ -1398,26 +1345,9 @@ class RoueDeLaFortune {
     }
 
     solvePuzzle() {
-        const roomData = this.network.getRoomData(this.network.getCurrentRoomCode());
-        
-        // Vérifier s'il y a une proposition de buzzer en attente
-        if (roomData.buzzerProposal) {
-            const proposal = roomData.buzzerProposal;
-            const message = `${proposal.playerName} propose:\n"${proposal.proposal}"\n\nEst-ce correct ?`;
-            const success = confirm(message);
-            
-            // Effacer la proposition et réactiver la révélation après validation
-            this.network.updateRoomState({ 
-                buzzerProposal: null,
-                letterRevealPaused: false
-            });
-            
-            this.game.solvePuzzle(success);
-        } else {
-            // Pas de proposition, demander si le joueur actuel a donné la bonne réponse
-            const success = confirm('Le joueur actuel a-t-il donné la bonne réponse ?');
-            this.game.solvePuzzle(success);
-        }
+        // Demander si le joueur actuel a donné la bonne réponse
+        const success = confirm('Le joueur actuel a-t-il donné la bonne réponse ?');
+        this.game.solvePuzzle(success);
     }
 
     handleSpecialCase(result) {
@@ -1489,12 +1419,12 @@ class RoueDeLaFortune {
         });
 
         // Sauvegarder l'état avec tous les joueurs déconnectés
-        this.network.saveRoomData(roomCode, roomData);
+        this.network.updateRoomState({ players: roomData.players });
 
         // Attendre un instant pour que la mise à jour soit propagée
-        setTimeout(() => {
-            // Supprimer complètement les données de la room du localStorage
-            localStorage.removeItem(`room_${roomCode}`);
+        setTimeout(async () => {
+            // Supprimer complètement les données de la room de Firebase
+            await this.network.db.ref(`rooms/${roomCode}`).remove();
 
             // Nettoyer les données de session
             sessionStorage.removeItem('currentRoomCode');
@@ -1626,17 +1556,6 @@ class RoueDeLaFortune {
             roundElement.textContent = roomData.currentRound || 1;
         }
 
-        // Mise à jour du type de manche
-        const roundTypeElement = document.getElementById('roundType');
-        if (roundTypeElement) {
-            if (roomData.roundType === 'enigme') {
-                roundTypeElement.textContent = '🧩 ÉNIGME';
-                roundTypeElement.style.display = 'inline-block';
-            } else {
-                roundTypeElement.style.display = 'none';
-            }
-        }
-
         // Joueur actuel
         const players = roomData.players.filter(p => p.role === 'player');
         const currentPlayer = players[roomData.currentPlayerIndex];
@@ -1655,23 +1574,6 @@ class RoueDeLaFortune {
 
         // Clavier
         this.ui.createLetterKeyboard(roomData);
-
-        // Notification de buzzer pour le host
-        if (isHost && roomData.buzzerProposal) {
-            const solveBtn = document.getElementById('solvePuzzleBtn');
-            if (solveBtn) {
-                solveBtn.textContent = `🔔 ${roomData.buzzerProposal.playerName} a buzzé !`;
-                solveBtn.classList.add('btn-warning');
-                solveBtn.style.animation = 'buzzerpulse 1s infinite';
-            }
-        } else if (isHost) {
-            const solveBtn = document.getElementById('solvePuzzleBtn');
-            if (solveBtn) {
-                solveBtn.textContent = 'Résoudre l\'énigme';
-                solveBtn.classList.remove('btn-warning');
-                solveBtn.style.animation = '';
-            }
-        }
 
         // Vue joueur - mise à jour des sections spécifiques
         if (!isHost) {
@@ -1761,22 +1663,6 @@ class RoueDeLaFortune {
                 turnNotification.classList.add('hidden');
             }
         }
-
-        // Masquer le buzzer (énigmes désactivées temporairement)
-        const buzzerSection = document.querySelector('.buzzer-section');
-        if (buzzerSection) {
-            buzzerSection.classList.add('hidden');
-        }
-
-        // Désactiver le buzzer si une proposition est déjà en cours
-        const buzzerBtn = document.getElementById('buzzerBtn');
-        if (buzzerBtn && roomData.letterRevealPaused) {
-            buzzerBtn.disabled = true;
-            buzzerBtn.textContent = '⏸️ Révélation en pause';
-        } else if (buzzerBtn) {
-            buzzerBtn.disabled = false;
-            buzzerBtn.textContent = '🔔 BUZZER - Proposer la solution';
-        }
     }
 
     // Helper pour vérifier si une valeur est un montant d'argent
@@ -1788,8 +1674,17 @@ class RoueDeLaFortune {
     // WHEEL OVERLAY
     // ==============================
     initWheelOverlay() {
-        this.wheel.createWheel('wheelElement');
         this.wheelRotation = 0; // Tracker la rotation actuelle de la roue
+        
+        // Créer la roue quand les segments sont prêts
+        const createWheelWhenReady = () => {
+            if (this.wheel.segments && this.wheel.segments.length > 0) {
+                this.wheel.createWheel('wheelElement');
+            } else {
+                setTimeout(createWheelWhenReady, 100);
+            }
+        };
+        createWheelWhenReady();
 
         // Récupérer le code de room depuis l'URL
         const urlParams = new URLSearchParams(window.location.search);

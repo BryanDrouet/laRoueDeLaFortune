@@ -52,22 +52,16 @@ export class GameEngine {
         }
 
         // Initialiser le jeu
-        // Désactiver temporairement les manches énigme
-        const roundType = 'normale';
-        
         this.network.updateRoomState({
             state: 'playing',
             currentRound: 1,
-            roundType: roundType,
             currentPlayerIndex: 0,
             puzzle: this.getRandomPuzzle(),
             revealedLetters: [],
             usedLetters: [],
             wheelResult: null,
             paused: false,
-            pausedAt: null,
-            buzzerActive: false,
-            letterRevealPaused: false
+            pausedAt: null
         });
 
         return true;
@@ -92,11 +86,6 @@ export class GameEngine {
         const roomData = this.network.getRoomData(this.network.getCurrentRoomCode());
         if (!roomData || !roomData.puzzle || roomData.paused) return false;
 
-        // Si la révélation des lettres est en pause (buzzer actif), empêcher la proposition
-        if (roomData.letterRevealPaused) {
-            return { success: false, reason: 'buzzer_active' };
-        }
-
         letter = letter.toUpperCase();
         
         // Vérifier si la lettre a déjà été utilisée
@@ -105,29 +94,37 @@ export class GameEngine {
         }
 
         // Ajouter aux lettres utilisées
-        roomData.usedLetters.push(letter);
+        const newUsedLetters = [...roomData.usedLetters, letter];
 
         // Vérifier si la lettre est dans la solution
         const count = (roomData.puzzle.solution.match(new RegExp(letter, 'g')) || []).length;
 
         if (count > 0) {
             // Lettre trouvée
-            if (!roomData.revealedLetters.includes(letter)) {
-                roomData.revealedLetters.push(letter);
+            const newRevealedLetters = [...roomData.revealedLetters];
+            if (!newRevealedLetters.includes(letter)) {
+                newRevealedLetters.push(letter);
             }
 
             // Calculer les gains
+            const updates = {
+                usedLetters: newUsedLetters,
+                revealedLetters: newRevealedLetters
+            };
+            
             if (roomData.wheelResult && typeof roomData.wheelResult === 'number') {
                 const currentPlayer = this.getCurrentPlayer(roomData);
                 if (currentPlayer && currentPlayer.connected) {
                     currentPlayer.roundMoney += roomData.wheelResult * count;
+                    updates.players = roomData.players;
                 }
             }
 
-            this.network.saveRoomData(this.network.getCurrentRoomCode(), roomData);
+            this.network.updateRoomState(updates);
             return { success: true, count: count, keepPlaying: true };
         } else {
-            // Lettre non trouvée - passer au joueur suivant
+            // Lettre non trouvée - mettre à jour les lettres utilisées puis passer au joueur suivant
+            this.network.updateRoomState({ usedLetters: newUsedLetters });
             this.nextPlayer();
             return { success: false, count: 0, reason: 'not_found' };
         }
@@ -154,8 +151,7 @@ export class GameEngine {
         // Proposer la lettre (voyelle)
         const result = this.proposeLetter(letter);
         
-        // Sauvegarder l'état même si la lettre n'est pas trouvée
-        this.network.saveRoomData(this.network.getCurrentRoomCode(), roomData);
+        // Pas besoin de sauvegarder ici car proposeLetter le fait déjà
         
         return result;
     }
@@ -170,6 +166,7 @@ export class GameEngine {
             // Mauvaise réponse - passer au joueur suivant
             if (currentPlayer) {
                 currentPlayer.roundMoney = 0;
+                this.network.updateRoomState({ players: roomData.players });
             }
             this.nextPlayer();
             return false;
@@ -186,30 +183,28 @@ export class GameEngine {
         });
 
         // Passer à la manche suivante
+        const updates = { players: roomData.players };
+        
         if (roomData.currentRound < (this.config?.game?.roundsPerGame || 5)) {
-            roomData.currentRound++;
+            updates.currentRound = roomData.currentRound + 1;
             
             // Mélanger les segments de la roue pour la nouvelle manche
             if (this.wheel && this.wheel.segments) {
                 this.wheel.segments = this.wheel.shuffleArray(this.wheel.segments);
             }
             
-            // Désactiver temporairement les manches énigme
-            roomData.roundType = 'normale';
-            roomData.puzzle = this.getRandomPuzzle();
-            roomData.revealedLetters = [];
-            roomData.usedLetters = [];
-            roomData.wheelResult = null;
-            roomData.currentPlayerIndex = 0;
-            roomData.letterRevealPaused = false;
-            roomData.buzzerProposal = null;
+            updates.puzzle = this.getRandomPuzzle();
+            updates.revealedLetters = [];
+            updates.usedLetters = [];
+            updates.wheelResult = null;
+            updates.currentPlayerIndex = 0;
         } else {
             // Fin de partie
-            roomData.state = 'finished';
-            roomData.winner = this.getWinner(roomData);
+            updates.state = 'finished';
+            updates.winner = this.getWinner(roomData);
         }
 
-        this.network.saveRoomData(this.network.getCurrentRoomCode(), roomData);
+        this.network.updateRoomState(updates);
         return true;
     }
 
@@ -231,9 +226,11 @@ export class GameEngine {
         }
 
         roomData.currentPlayerIndex = nextIndex;
-        roomData.wheelResult = null;
 
-        this.network.saveRoomData(this.network.getCurrentRoomCode(), roomData);
+        this.network.updateRoomState({ 
+            currentPlayerIndex: nextIndex,
+            wheelResult: null
+        });
     }
 
     // Obtenir le joueur actuel
@@ -270,7 +267,7 @@ export class GameEngine {
             targetPlayer.roundMoney = 0;
         }
 
-        this.network.saveRoomData(this.network.getCurrentRoomCode(), roomData);
+        this.network.updateRoomState({ players: roomData.players });
     }
 
     // Échange
@@ -288,7 +285,7 @@ export class GameEngine {
             targetPlayer.roundMoney = temp;
         }
 
-        this.network.saveRoomData(this.network.getCurrentRoomCode(), roomData);
+        this.network.updateRoomState({ players: roomData.players });
     }
 
     // Diviseur
@@ -303,7 +300,7 @@ export class GameEngine {
             targetPlayer.roundMoney = Math.floor(targetPlayer.roundMoney / 2);
         }
 
-        this.network.saveRoomData(this.network.getCurrentRoomCode(), roomData);
+        this.network.updateRoomState({ players: roomData.players });
     }
 
     // Obtenir le gagnant
