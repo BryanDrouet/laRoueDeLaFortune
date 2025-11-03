@@ -1346,11 +1346,15 @@ class RoueDeLaFortune {
         // (dashboard joueurs et overlay) via handleRoomUpdate()
         // Stocker la valeur ET le type pour pouvoir traiter les cas spéciaux
         console.log('[DEBUG] spinWheel - Mise à jour wheelResult dans Firebase');
-        this.network.updateRoomState({ 
+        const updates = { 
             wheelResult: selectedSegment.value,
-            wheelResultType: selectedSegment.type,
-            wheelResultEffect: selectedSegment.effect
-        });
+            wheelResultType: selectedSegment.type
+        };
+        // N'ajouter wheelResultEffect que s'il existe (segments spéciaux uniquement)
+        if (selectedSegment.effect) {
+            updates.wheelResultEffect = selectedSegment.effect;
+        }
+        this.network.updateRoomState(updates);
 
         // Attendre la fin de l'animation (4 secondes) avant d'activer les boutons
         setTimeout(() => {
